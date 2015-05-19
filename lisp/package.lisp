@@ -3,6 +3,7 @@
   (:export #:annihilate-registry
 	   #:evaluate-registry
 	   #:execute-registry
+	   #:extract-registry
 	   #:generate-bird-conf
 	   #:generate-nginx-conf
 	   #:generate-registry-csv

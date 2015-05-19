@@ -20,11 +20,12 @@
 				      :group-by '([registry id] [-update-time] [-update-time-urgently] [completed]))))
       (list :registry-list
 	    (mapcar #'registry-plist*
-		    (select [registry id] [-update-time] [-update-time-urgently] [completed] [count [resource id]]
-			    :from '([registry] [resource])
-			    :where [= [registry-id] [registry id]]
-			    :group-by '([registry id] [-update-time] [-update-time-urgently] [completed])
-			    :order-by '(([-update-time] :desc) ([registry id] :desc)))))))
+		    (query (concatenate 'string
+					"select registry.id, _update_time, _update_time_urgently, completed, count(resource.id) "
+					"from registry "
+					"left join resource on registry_id = registry.id "
+					"group by registry.id, _update_time, _update_time_urgently, completed "
+					"order by _update_time desc, registry.id desc "))))))
 
 (defun registry/ ()
   (let ((id (string-integer (get-parameter "id"))))
@@ -49,10 +50,12 @@
 		      :av-pairs `(([id] ,id)))
       (rename-file (first file) zip))
     (sb-thread:make-thread #'(lambda ()
-			       (extract-registry zip)
-			       (evaluate-registry :id id)
-			       (when (equal exec "yes")
-				 (execute-registry :id id)))
+			       (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
+								  :pool t)
+				 (extract-registry zip)
+				 (evaluate-registry :id id)
+				 (when (equal exec "yes")
+				   (execute-registry :id id))))
 			   :name (format nil "process-registry ~a" id))
     (push '(:motd-registry-loaded t) (session-value :motd))
     (when (equal exec "yes")
@@ -63,7 +66,9 @@
   (setf (active-sauron) "exec")
   (let ((id (string-integer (get-parameter "id"))))
     (sb-thread:make-thread #'(lambda ()
-			       (execute-registry :id id))
+			       (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
+								  :pool t)
+				 (execute-registry :id id)))
 			   :name (format nil "exec-registry ~a" id))
     (push '(:motd-registry-executed t) (session-value :motd)))
   (redirect "/status/"))

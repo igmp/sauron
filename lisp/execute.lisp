@@ -77,13 +77,11 @@
 	(format stream "}~%")))))
 
 (defun execute-registry (&key (id (working-registry-id)))
-  (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
-				     :pool t)
-    (setf (working-registry-id) id)
-    (generate-registry-csv :id id)
-    (generate-bird-conf    :id id)
-    (generate-nginx-conf   :id id)
-    (sb-ext:run-program (bird-init.d)  '("reload"))
-    (sb-ext:run-program (nginx-init.d) '("reload"))))
+  (setf (working-registry-id) id)
+  (generate-registry-csv :id id)
+  (generate-bird-conf    :id id)
+  (generate-nginx-conf   :id id)
+  (sb-ext:run-program (bird-init.d)  '("reload"))
+  (sb-ext:run-program (nginx-init.d) '("reload")))
 
 ;;;;

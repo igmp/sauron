@@ -1,0 +1,8 @@
+LISP=/usr/bin/sbcl
+SLIME_PORT=4005
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=sauron
+DB_USER=sauron
+DB_PASSWORD=""

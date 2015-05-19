@@ -4,13 +4,13 @@ create table config (
 );
 
 insert into config (key, value) values
-('ACTIVEP',               NULL),
+('ACTIVE-SAURON',         NULL),
 ('BIRD-PROTOCOL',         'sauron'),
 ('BIRD-INIT.D',           '/etc/init.d/bird'),
 ('BLOCK-URL',             'http://shtraf.net.ru/sauron/block/'),
 ('HOME-DIRECTORY',        '/home/sauron/'),
 ('NGINX-INIT.D',          '/etc/init.d/nginx'),
-('ROOT-MEANS-DOMAIN',     't');
+('ROOT-MEANS-DOMAIN',     't'),
 ('WORKING-REGISTRY-ID',   NULL);
 
 

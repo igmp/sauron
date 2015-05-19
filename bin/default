@@ -1,2 +1,0 @@
-LISP=/usr/bin/sbcl
-SLIME_PORT=4005
