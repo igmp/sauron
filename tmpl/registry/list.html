@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <title>Реестры РКН &mdash; &laquo;Саурон&raquo;</title>
+    <link rel="stylesheet" type="text/css" href="/css/sauron.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table id="cover">
+      <tr>
+	<td id="title" colspan="2">
+	  <h1>Реестры РКН</h1>
+	  <center><tmpl_include 'motd.html'></center>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="menu">
+	  <tmpl_include 'menu.html'>
+	</td>
+
+	<td id="main">
+	  <table width="80%">
+	    <tr>
+	      <th width="40%">
+		Время
+	      </th>
+	      <th width="40%">
+		Срочное время
+	      </th>
+	      <th width="10%">
+		Записи
+	      </th>
+	      <th width="10%">
+		&nbsp;
+	      </th>
+	    </tr>
+	    <tmpl_loop 'registry-list'>
+	      <tr>
+		<td>
+		  <a name="<tmpl_var 'id'>"></a>
+		  <tmpl_var 'up-time'>
+		</td>
+		<td>
+		  <tmpl_if 'up-time-urg'>
+		    <tmpl_var 'up-time-urg'>
+		  <tmpl_else>
+		    &nbsp;
+		  </tmpl_if>
+		</td>
+		<td align="right">
+		  <tmpl_var 'resource-count'>
+		</td>
+		<td align="center">
+		  <nobr>
+		    <tmpl_if 'completed'>
+		      <a href="/registry/exec/?id=<tmpl_var 'id'>" title="Применить">#</a>
+		      <tmpl_if 'workingp'>
+			X
+		      <tmpl_else>
+			<a href="/registry/del/?id=<tmpl_var 'id'>" title="Удалить">X</a>
+		      </tmpl_if>
+		    </tmpl_if>
+		  </nobr>
+		</td>
+	      </tr>
+	    </tmpl_loop>
+	  </table>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="signature" colspan="2">
+	  <tmpl_include "signature.html">
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>

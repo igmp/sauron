@@ -1,0 +1,97 @@
+<html>
+  <head>
+    <title>Статус &mdash; &laquo;Саурон&raquo;</title>
+    <link rel="stylesheet" type="text/css" href="/css/sauron.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table id="cover">
+      <tr>
+	<td id="title" colspan="2">
+	  <h1>Статус</h1>
+	  <center><tmpl_include 'motd.html'></center>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="menu">
+	  <tmpl_include 'menu.html'>
+	</td>
+
+	<td id="main">
+	  <table width="80%">
+	    <tr>
+	      <td class="li">
+		Последний реестр:
+	      </td>
+	      <td class="working-count">
+		<nobr><tmpl_var 'last-registry-time'></nobr>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td>
+		Рабочий реестр:
+	      </td>
+	      <td class="working-count">
+		<nobr><tmpl_var 'working-registry-time'></nobr>
+	      </td>
+	    </tr>
+	    <tr>
+	    </tr>
+	    <tr>
+	      <td>
+		Количество записей:
+	      </td>
+	    </tr>
+	    <tr>
+	      <td class="proto">
+		HTTP:
+	      </td>
+	      <td class="working-count">
+		<tmpl_var 'working-http'>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td class="proto">
+		HTTPS:
+	      </td>
+	      <td class="working-count">
+		<tmpl_var 'working-https'>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td class="proto">
+		Неразобранных:
+	      </td>
+	      <td class="working-count">
+		<tmpl_var 'working-bad'>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td class="proto">
+		Всего:
+	      </td>
+	      <td class="working-count">
+		<tmpl_var 'working-total'>
+	      </td>
+	    </tr>
+	    <tr>
+	      <td>
+		Количество IP адресов:
+	      </td>
+	      <td class="working-count">
+		<nobr><tmpl_var 'working-ip'></nobr>
+	      </td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="signature" colspan="2">
+	  <tmpl_include "signature.html">
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>

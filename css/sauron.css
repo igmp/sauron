@@ -1,0 +1,48 @@
+body {
+    background-color: #f8f8f8;
+}
+
+table#cover {
+    height: 100%;
+    width: 100%
+}
+
+td#title {
+    text-align: center;
+}
+
+td#menu {
+    vertical-align: top;
+    width: 20%;
+}
+
+td#main {
+    height: 100%;
+    vertical-align: top;
+}
+
+td#signature {
+    text-align: right;
+}
+
+.menu {
+    font-size: large;
+}
+
+input.config-var {
+    width: 100%;
+}
+
+td.li {
+    width: 50%;
+}
+
+td.proto {
+    text-indent: 10%;
+}
+
+td.working-count {
+    text-align: right;
+}
+
+/**/

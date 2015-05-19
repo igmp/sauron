@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <title>Управление &mdash; &laquo;Саурон&raquo;</title>
+    <link rel="stylesheet" type="text/css" href="/css/sauron.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table id="cover">
+      <tr>
+	<td id="title" colspan="2">
+	  <h1>Управление</h1>
+	  <center><tmpl_include 'motd.html'></center>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="menu">
+	  <tmpl_include 'menu.html'>
+	</td>
+
+	<td id="main">
+	  <form action="/config/set/" method="post">
+	    <table width="80%">
+	      <tr>
+		<td class="li">
+		  Включено:
+		</td>
+		<td>
+		  <select name="active-sauron">
+		    <option value="yes" <tmpl_if 'active-sauron'>selected</tmpl_if>>да</option>
+		    <option value="no" <tmpl_unless 'active-sauron'>selected</tmpl_unless>>нет</option>
+		  </select>
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Блокировать по корню весь домен:
+		</td>
+		<td>
+		  <select name="root-means-domain">
+		    <option value="yes" <tmpl_if 'root-means-domain'>selected</tmpl_if>>да</option>
+		    <option value="no" <tmpl_unless 'root-means-domain'>selected</tmpl_unless>>нет</option>
+		  </select>
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Домашний каталог:
+		</td>
+		<td>
+		  <input class="config-var" type="text" disabled
+			 name="home-directory" value="<tmpl_var 'home-directory'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Протокол Bird:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="bird-protocol" value="<tmpl_var 'bird-protocol'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Управляющий скрипт Bird:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="bird-init.d" value="<tmpl_var 'bird-init.d'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Управляющий скрипт Nginx:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="nginx-init.d" value="<tmpl_var 'nginx-init.d'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  URL сообщения о блокировке:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="block-url" value="<tmpl_var 'block-url'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td colspan="2" align="right">
+		  <input type="submit" value="Записать">
+		</td>
+	      </tr>
+	    </table>
+	  </form>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="signature" colspan="2">
+	  <tmpl_include "signature.html">
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>

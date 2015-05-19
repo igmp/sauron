@@ -1,0 +1,38 @@
+<table class="menu">
+  <tr>
+    <td>
+      <tmpl_if 'status-tab'>
+	Статус
+      <tmpl_else>
+	<a href="/status/">Статус</a>
+      </tmpl_if>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <tmpl_if 'load-tab'>
+	Загрузка
+      <tmpl_else>
+	<a href="/registry/load/">Загрузка</a>
+      </tmpl_if>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <tmpl_if 'config-tab'>
+	Управление
+      <tmpl_else>
+	<a href="/config/">Управление</a>
+      </tmpl_if>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <tmpl_if 'registry-tab'>
+	Реестры РКН
+      <tmpl_else>
+	<a href="/registry/">Реестры РКН</a>
+      </tmpl_if>
+    </td>
+  </tr>
+</table>

@@ -1,0 +1,91 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="RKN's registry filter engine."
+NAME=sauron
+DEFAULT_FILE=/etc/default/$NAME
+SCRIPT_NAME=/etc/init.d/$NAME
+HOME=/home/sauron
+LOG_DIR=$HOME/log
+DRIBBLE_FILE=$LOG_DIR/$NAME.dribble
+LOG_FILE=$LOG_DIR/$NAME.log
+RUN_DIR=$HOME/run
+PID_FILE=$RUN_DIR/$NAME.pid
+SOCKET_FILE=$RUN_DIR/$NAME.socket
+DETACHTTY=/usr/bin/detachtty
+
+# Read config file if it is present.
+[ -r $DEFAULT_FILE ] && . $DEFAULT_FILE
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+function do_start() {
+    start-stop-daemon --start --oknodo --chuid sauron \
+	--pidfile $PID_FILE \
+	--exec $DETACHTTY -- \
+	--dribble-file $DRIBBLE_FILE \
+	--log-file $LOG_FILE \
+	--pid-file $PID_FILE \
+	$SOCKET_FILE \
+	$LISP --end-runtime-options \
+	--eval "(require :asdf)" \
+	--eval "(asdf:operate (quote asdf:load-op) :swank)" \
+	--eval "(swank:create-server :port ${SLIME_PORT:-4005} :dont-close t)" \
+	--eval "(ql:quickload \"sauron\")" \
+	--eval "(sauron:start-sauron)"
+}
+
+#
+# Function that stops the daemon/service
+#
+function do_stop() {
+    start-stop-daemon --stop --oknodo \
+	--pidfile $PID_FILE \
+	--exec $DETACHTTY
+}
+
+case "$1" in
+    start)
+	echo -n "Starting $DESC"
+	do_start
+	echo "."
+	;;
+    
+    stop)
+	echo -n "Stopping $DESC"
+	do_stop
+	echo "."
+	;;
+    
+    restart)
+	echo -n "Restarting $DESC"
+	do_stop
+	sleep 1
+	do_start
+	echo "."
+	;;
+    
+    *)
+	echo "Usage: $SCRIPT_NAME {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
+
+####
