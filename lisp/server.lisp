@@ -10,6 +10,11 @@
 (defparameter *db-user* (or (sb-posix:getenv "DB_USER") "sauron"))
 (defparameter *db-password* (or (sb-posix:getenv "DB_PASSWORD") ""))
 
+(defmacro with-sauron-db (() &rest body)
+  `(with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
+				      :pool t)
+     ,@body))
+
 (defmacro define-database-configured-variable (var)
   `(let (,var)
      (makunbound ',var)
@@ -80,8 +85,7 @@
 	  (let ((handler (funcall dispatcher request)))
 	    (when handler
 	      (return-from acceptor-dispatch-request
-                (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
-						   :pool t)
+                (with-sauron-db ()
 		  (let ((*tmp-directory* (tmp-directory)))
 		    (funcall handler)))))))
 	*sauron-dispatch-table*)
@@ -90,11 +94,13 @@
 (defvar *server* nil)
 
 (defun start-sauron ()
-  (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
-				     :pool t)
+  (with-sauron-db ()
     (start (setf *server* (make-instance 'sauron-acceptor))))
-  ;; start cron
-  )
+  (sb-thread:make-thread #'(lambda ()
+			     (with-sauron-db ()
+			       (execute-registry :id (working-registry-id))))
+			 :name (format nil "exec-registry ~a" (working-registry-id)))
+  #| start cron |#)
 
 (defun stop-sauron ()
   (stop *server*))

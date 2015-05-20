@@ -79,10 +79,10 @@
 
 (defun execute-registry (&key (id (working-registry-id)))
   (setf (working-registry-id) id)
-  (generate-registry-csv :id id)
-  (generate-bird-conf    :id id)
-  (generate-nginx-conf   :id id)
+  (generate-registry-csv :id (and (active-sauron) id))
+  (generate-bird-conf    :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
+  (generate-nginx-conf   :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 ;;;;
