@@ -39,9 +39,10 @@
     (format stream "protocol static ~a {~%" (bird-protocol))
     (loop for (address) in (select [distinct [-address]]
 				   :from [ip-address]
-				   :where [= [registry-id] id]
+				   :where [and [= [registry-id] id]
+					       [is [-subnet] nil]]
 				   :order-by [-address])
-       do (format stream "~aroute~a~8a~areject;~%" #\Tab #\Tab address #\Tab))
+       do (format stream "~aroute       ~a/32~areject;~%" #\Tab address #\Tab))
     (format stream "}~%")))
 
 (defun generate-nginx-conf (&key (id (working-registry-id)) (file (nginx-conf)))
