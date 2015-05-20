@@ -82,7 +82,7 @@
   (generate-registry-csv :id id)
   (generate-bird-conf    :id id)
   (generate-nginx-conf   :id id)
-  (sb-ext:run-program (bird-init.d)  '("reload"))
-  (sb-ext:run-program (nginx-init.d) '("reload")))
+  (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
+  (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 ;;;;

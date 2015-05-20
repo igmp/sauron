@@ -6,10 +6,10 @@ create table config (
 insert into config (key, value) values
 ('ACTIVE-SAURON',         NULL),
 ('BIRD-PROTOCOL',         'sauron'),
-('BIRD-INIT.D',           '/etc/init.d/bird'),
+('BIRD-RELOAD',           'sudo /etc/init.d/bird reload'),
 ('BLOCK-URL',             'http://shtraf.net.ru/sauron/block/'),
 ('HOME-DIRECTORY',        '/home/sauron/'),
-('NGINX-INIT.D',          '/etc/init.d/nginx'),
+('NGINX-RELOAD',          'sudo /etc/init.d/nginx reload'),
 ('ROOT-MEANS-DOMAIN',     't'),
 ('WORKING-REGISTRY-ID',   NULL);
 
