@@ -50,7 +50,7 @@
 			  :direction :output
 			  :if-exists :supersede
 			  :if-does-not-exist :create)
-    (let ((dm0 nil))
+    (let (dm0 lct0)
       (loop for (content-id domain location) in
 	   (select [-id] [-domain] [-location]
 		   :from '([content] [resource])
@@ -67,13 +67,16 @@
 		       (format stream "~a}~%" #\Tab)
 		       (format stream "}~%~%"))
 		     (format stream "server {~%~aserver_name ~a;~%~%" #\Tab domain))
-		   (if (or (not location)
-			   (and (eql location "/") (root-means-domain)))
-		       (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
-		       (format stream "~alocation = ~a { # ~a~%" #\Tab location content-id))
-		   (format stream "~a~areturn 301 ~a~%" #\Tab #\Tab (block-url))
-		   (format stream "~a}~%" #\Tab)
-		   (setq dm0 domain)))
+		   (unless (and (equal domain dm0)
+				(equal location lct0))
+		     (if (or (not location)
+			     (and (eql location "/") (root-means-domain)))
+			 (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
+			 (format stream "~alocation = ~a { # ~a~%" #\Tab (url-encode location) content-id))
+		     (format stream "~a~aproxy_pass ~a;~%" #\Tab #\Tab (block-url))
+		     (format stream "~a}~%" #\Tab))
+		   (setq dm0 domain
+			 lct0 location)))
       (when dm0
 	(format stream "}~%")))))
 

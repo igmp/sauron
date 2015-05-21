@@ -121,8 +121,8 @@
 					:av-pairs `(([registry-id] ,id)
 						    ([content-id]  ,content-id)
 						    ([ssl]         ,(not (equal proto "http")))
-						    ([-domain]     ,(string-downcase domain))
-						    ([-location]   ,(or location "/")))))))
+						    ([-domain]     ,domain)
+						    ([-location]   ,location))))))
 		(insert-records :into [resource]
 				:av-pairs `(([registry-id] ,id)
 					    ([content-id]  ,content-id)
