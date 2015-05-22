@@ -36,6 +36,7 @@
 (define-database-configured-variable bird-reload)
 (define-database-configured-variable block-url)
 (define-database-configured-variable home-directory)
+(define-database-configured-variable nginx-port)
 (define-database-configured-variable nginx-reload)
 (define-database-configured-variable root-means-domain)
 (define-database-configured-variable working-registry-id)

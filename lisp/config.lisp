@@ -22,6 +22,7 @@
 	(bird-reload)       (post-parameter "bird-reload")
 	(bird-protocol)     (post-parameter "bird-protocol")
 	(block-url)         (post-parameter "block-url")
+	(nginx-port)        (post-parameter "nginx-port")
 	(nginx-reload)      (post-parameter "nginx-reload"))
   (when (and (active-sauron)
 	     (not (working-registry-id)))

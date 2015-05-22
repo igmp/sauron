@@ -9,6 +9,7 @@ insert into config (key, value) values
 ('BIRD-RELOAD',           'sudo /etc/init.d/bird reload'),
 ('BLOCK-URL',             'http://shtraf.net.ru/sauron/block/'),
 ('HOME-DIRECTORY',        '/home/sauron/'),
+('NGINX-PORT',            '8080'),
 ('NGINX-RELOAD',          'sudo /etc/init.d/nginx reload'),
 ('ROOT-MEANS-DOMAIN',     't'),
 ('WORKING-REGISTRY-ID',   NULL);
