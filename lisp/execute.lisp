@@ -58,26 +58,27 @@
 			       [is [ssl] nil]
 			       [= [content registry-id] id]]
 		   :order-by '([-domain] [-location]))
-	 do (progn (when (string-not-equal domain dm0)
-		     (when dm0
-		       (format stream "~alocation / {~%" #\Tab)
-		       (format stream "~a~aproxy_pass $scheme://$host$request_uri;~%" #\Tab #\Tab)
-		       (format stream "~a~aproxy_set_header Host $http_host;~%" #\Tab #\Tab)
-		       (format stream "~a~aproxy_buffering off;~%" #\Tab #\Tab)
-		       (format stream "~a}~%" #\Tab)
-		       (format stream "}~%~%"))
-		     (format stream "server {~%~aserver_name ~a;~%" #\Tab domain)
-		     (format stream "~alisten~a~a;~%~%" #\Tab #\Tab (nginx-port)))
-		   (unless (and (equal domain dm0)
-				(equal location lct0))
-		     (if (or (not location)
-			     (and (eql location "/") (root-means-domain)))
-			 (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
-			 (format stream "~alocation = ~a { # ~a~%" #\Tab (url-encode location) content-id))
-		     (format stream "~a~aproxy_pass ~a;~%" #\Tab #\Tab (block-url))
-		     (format stream "~a}~%" #\Tab))
-		   (setq dm0 domain
-			 lct0 location)))
+	 do (let ((location* (url-encode* location)))
+	      (progn (when (string-not-equal domain dm0)
+		       (when dm0
+			 (format stream "~alocation / {~%" #\Tab)
+			 (format stream "~a~aproxy_pass $scheme://$host$request_uri;~%" #\Tab #\Tab)
+			 (format stream "~a~aproxy_set_header Host $http_host;~%" #\Tab #\Tab)
+			 (format stream "~a~aproxy_buffering off;~%" #\Tab #\Tab)
+			 (format stream "~a}~%" #\Tab)
+			 (format stream "}~%~%"))
+		       (format stream "server {~%~aserver_name ~a;~%" #\Tab domain)
+		       (format stream "~alisten ~a;~%" #\Tab (nginx-port))
+		       (format stream "~aresolver ~a;~%~%" #\Tab (nginx-resolver)))
+		     (when (or (not (equal domain dm0))
+			       (not (equal location* lct0)))
+		       (if (or (not location*)
+			       (and (eql location* "/") (root-means-domain)))
+			   (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
+			   (format stream "~alocation = ~a { # ~a~%" #\Tab location* content-id))
+		       (format stream "~a~aproxy_pass ~a?$scheme://$host$request_uri;~%~a}~%" #\Tab #\Tab (block-url) #\Tab))
+		     (setq dm0 domain
+			   lct0 location*))))
       (when dm0
 	(format stream "}~%")))))
 

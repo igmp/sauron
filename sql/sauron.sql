@@ -11,6 +11,7 @@ insert into config (key, value) values
 ('HOME-DIRECTORY',        '/home/sauron/'),
 ('NGINX-PORT',            '8080'),
 ('NGINX-RELOAD',          'sudo /etc/init.d/nginx reload'),
+('NGINX-RESOLVER',        '127.0.0.1'),
 ('ROOT-MEANS-DOMAIN',     't'),
 ('WORKING-REGISTRY-ID',   NULL);
 

@@ -1,7 +1,7 @@
 (in-package :sauron)
 (file-enable-sql-reader-syntax)
 
-(defparameter *sauron-version* "0.2")
+(defparameter *sauron-version* "0.3")
 (defparameter *default-database-type* :postgresql-socket)
 (defparameter *default-caching* nil)
 (defparameter *db-host* (or (sb-posix:getenv "DB_HOST") "localhost"))
@@ -38,6 +38,7 @@
 (define-database-configured-variable home-directory)
 (define-database-configured-variable nginx-port)
 (define-database-configured-variable nginx-reload)
+(define-database-configured-variable nginx-resolver)
 (define-database-configured-variable root-means-domain)
 (define-database-configured-variable working-registry-id)
 
@@ -114,6 +115,14 @@
 (defun static-file ()
   (handle-static-file (concatenate 'string (home-directory) (script-name*))))
 
+(defun root-redirect ()
+  (redirect "/status/"))
+
+(defun general-plist ()
+  (append (list :sauron-version *sauron-version*)
+	  (prog1 (apply #'append (session-value :motd))
+	    (setf (session-value :motd) nil))))
+
 (defun htmpl (tmpl plist)
   (let ((*default-template-pathname* (concatenate 'string (tmpl-directory)))
         (*template-start-marker* "<")
@@ -138,12 +147,25 @@
       (concatenate 'string "'" (regex-replace "'" string "''") "'")
       "''"))
 
-(defun root-redirect ()
-  (redirect "/status/"))
-
-(defun general-plist ()
-  (append (list :sauron-version *sauron-version*)
-	  (prog1 (apply #'append (session-value :motd))
-	    (setf (session-value :motd) nil))))
+;; modified Hunchentoot's version
+(defun url-encode* (string &optional (external-format *hunchentoot-default-external-format*))
+  "URL-encodes a string using the external format EXTERNAL-FORMAT. The
+default for EXTERNAL-FORMAT is the value of
+*HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
+  (when string
+    (with-output-to-string (s)
+      (loop for c across string
+	 for index from 0
+	 do (cond ((or (char<= #\0 c #\9)
+		       (char<= #\a c #\z)
+		       (char<= #\A c #\Z)
+		       (find c "/?:@=&%-_.+!*'()," :test #'char=))
+		   (write-char c s))
+		  (t (loop for octet across
+			  (flexi-streams:string-to-octets string
+							  :start index
+							  :end (1+ index)
+							  :external-format external-format)
+			do (format s "%~2,'0x" octet))))))))
 
 ;;;;
