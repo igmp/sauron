@@ -156,4 +156,12 @@
 			      :from [delete-registry])
        do (ignore-errors (delete-file (format nil "~a~a" (zip-directory) id))))))
 
+(defun clear-outdated (&key (days (store-days)))
+  (dolist (id (query (concatenate 'string
+				  "select id "
+				  "from registry "
+				  "where _update_time + interval '" days " days' < now() ")
+		     :flatp t))
+    (annihilate-registry :id id)))
+
 ;;;;

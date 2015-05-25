@@ -59,6 +59,7 @@
     (push '(:motd-registry-loaded t) (session-value :motd))
     (when (equal exec "yes")
       (push '(:motd-registry-executed t) (session-value :motd)))
+    (clear-outdated)
     (redirect (format nil "/registry/#~a" id))))
 
 (defun registry/exec/ ()

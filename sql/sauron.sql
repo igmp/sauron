@@ -4,16 +4,17 @@ create table config (
 );
 
 insert into config (key, value) values
-('ACTIVE-SAURON',         NULL),
-('BIRD-PROTOCOL',         'sauron'),
-('BIRD-RELOAD',           'sudo /etc/init.d/bird reload'),
-('BLOCK-URL',             'http://shtraf.net.ru/sauron/block/'),
-('HOME-DIRECTORY',        '/home/sauron/'),
-('NGINX-PORT',            '8080'),
-('NGINX-RELOAD',          'sudo /etc/init.d/nginx reload'),
-('NGINX-RESOLVER',        '127.0.0.1'),
-('ROOT-MEANS-DOMAIN',     't'),
-('WORKING-REGISTRY-ID',   NULL);
+('ACTIVE-SAURON',       NULL),
+('BIRD-PROTOCOL',       'sauron'),
+('BIRD-RELOAD',         'sudo /etc/init.d/bird reload'),
+('BLOCK-URL',           'http://shtraf.net.ru/sauron/block/'),
+('HOME-DIRECTORY',      '/home/sauron/'),
+('NGINX-PORT',          '8080'),
+('NGINX-RELOAD',        'sudo /etc/init.d/nginx reload'),
+('NGINX-RESOLVER',      '127.0.0.1'),
+('ROOT-MEANS-DOMAIN',   't'),
+('STORE-DAYS',          '7'),
+('WORKING-REGISTRY-ID', NULL);
 
 
 create sequence last_info_seq

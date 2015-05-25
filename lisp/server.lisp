@@ -1,7 +1,7 @@
 (in-package :sauron)
 (file-enable-sql-reader-syntax)
 
-(defparameter *sauron-version* "0.3")
+(defparameter *sauron-version* "0.4")
 (defparameter *default-database-type* :postgresql-socket)
 (defparameter *default-caching* nil)
 (defparameter *db-host* (or (sb-posix:getenv "DB_HOST") "localhost"))
@@ -40,6 +40,7 @@
 (define-database-configured-variable nginx-reload)
 (define-database-configured-variable nginx-resolver)
 (define-database-configured-variable root-means-domain)
+(define-database-configured-variable store-days)
 (define-database-configured-variable working-registry-id)
 
 (defun last-registry-id ()
