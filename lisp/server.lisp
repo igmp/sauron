@@ -1,7 +1,7 @@
 (in-package :sauron)
 (file-enable-sql-reader-syntax)
 
-(defparameter *sauron-version* "0.4")
+(defparameter *sauron-version* "0.5")
 (defparameter *default-database-type* :postgresql-socket)
 (defparameter *default-caching* nil)
 (defparameter *db-host* (or (sb-posix:getenv "DB_HOST") "localhost"))

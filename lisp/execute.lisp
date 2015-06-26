@@ -56,6 +56,7 @@
 		   :from '([content] [resource])
 		   :where [and [= [content id] [content-id]]
 			       [is [ssl] nil]
+			       [is [-url] nil]
 			       [= [content registry-id] id]]
 		   :order-by '([-domain] [-location]))
 	 do (let ((location* (url-encode* location)))
