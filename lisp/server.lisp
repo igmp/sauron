@@ -1,7 +1,7 @@
 (in-package :sauron)
 (file-enable-sql-reader-syntax)
 
-(defparameter *sauron-version* "0.5")
+(defparameter *sauron-version* "0.6")
 (defparameter *default-database-type* :postgresql-socket)
 (defparameter *default-caching* nil)
 (defparameter *db-host* (or (sb-posix:getenv "DB_HOST") "localhost"))
@@ -150,9 +150,8 @@
 
 ;; modified Hunchentoot's version
 (defun url-encode* (string &optional (external-format *hunchentoot-default-external-format*))
-  "URL-encodes a string using the external format EXTERNAL-FORMAT. The
-default for EXTERNAL-FORMAT is the value of
-*HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
+  "URL-encodes a string using the external format EXTERNAL-FORMAT. The default
+for EXTERNAL-FORMAT is the value of *HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
   (when string
     (with-output-to-string (s)
       (loop for c across string
@@ -160,7 +159,7 @@ default for EXTERNAL-FORMAT is the value of
 	 do (cond ((or (char<= #\0 c #\9)
 		       (char<= #\a c #\z)
 		       (char<= #\A c #\Z)
-		       (find c "/?:@=&%-_.+!*'()," :test #'char=))
+		       (find c "/?:@&-_.+!*'()," :test #'char=))
 		   (write-char c s))
 		  (t (loop for octet across
 			  (flexi-streams:string-to-octets string

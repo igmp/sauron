@@ -84,6 +84,7 @@ insert into entry_type (id, name) values (1, 'реестр ЕАИС');
 insert into entry_type (id, name) values (2, 'реестр НАП');
 insert into entry_type (id, name) values (3, 'реестр 398-ФЗ');
 insert into entry_type (id, name) values (4, 'реестр 97-ФЗ (организаторы распространения информации)');
+insert into entry_type (id, name) values (5, 'реестр НАП, постоянная блокировка сайтов');
 
 
 create sequence content_seq

@@ -50,7 +50,11 @@
 			  :direction :output
 			  :if-exists :supersede
 			  :if-does-not-exist :create)
-    (let (dm0 lct0)
+    ;; nginx doesn't allow duplicate locations within one domain
+    (let ((dmnhash (make-hash-table :test 'equal)) ; all known domains
+	  (lcthash nil) ; all known locations for a current domain
+	  (dmn0 nil)    ; previous domain
+	  (lct0 nil))   ; previous location
       (loop for (content-id domain location) in
 	   (select [-id] [-domain] [-location]
 		   :from '([content] [resource])
@@ -60,27 +64,31 @@
 			       [= [content registry-id] id]]
 		   :order-by '([-domain] [-location]))
 	 do (let ((location* (url-encode* location)))
-	      (progn (when (string-not-equal domain dm0)
-		       (when dm0
+	      (progn (when (string-not-equal domain dmn0)
+		       (when dmn0
 			 (format stream "~alocation / {~%" #\Tab)
 			 (format stream "~a~aproxy_pass $scheme://$host$request_uri;~%" #\Tab #\Tab)
 			 (format stream "~a~aproxy_set_header Host $http_host;~%" #\Tab #\Tab)
 			 (format stream "~a~aproxy_buffering off;~%" #\Tab #\Tab)
 			 (format stream "~a}~%" #\Tab)
 			 (format stream "}~%~%"))
+		       (setf lcthash (make-hash-table :test 'equal)
+			     (gethash dmn0 dmnhash) lcthash)
 		       (format stream "server {~%~aserver_name ~a;~%" #\Tab domain)
 		       (format stream "~alisten ~a;~%" #\Tab (nginx-port))
 		       (format stream "~aresolver ~a;~%~%" #\Tab (nginx-resolver)))
-		     (when (or (not (equal domain dm0))
-			       (not (equal location* lct0)))
-		       (if (or (not location*)
-			       (and (eql location* "/") (root-means-domain)))
-			   (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
-			   (format stream "~alocation = ~a { # ~a~%" #\Tab location* content-id))
-		       (format stream "~a~aproxy_pass ~a?$scheme://$host$request_uri;~%~a}~%" #\Tab #\Tab (block-url) #\Tab))
-		     (setq dm0 domain
+		     (unless (gethash location* lcthash)
+		       (setf (gethash location* lcthash) t)
+		       (when (or (not (equal domain dmn0))
+				 (not (equal location* lct0)))
+			 (if (or (not location*)
+				 (and (eql location* "/") (root-means-domain)))
+			     (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
+			     (format stream "~alocation = ~a { # ~a~%" #\Tab location* content-id))
+			 (format stream "~a~aproxy_pass ~a?$scheme://$host$request_uri;~%~a}~%" #\Tab #\Tab (block-url) #\Tab)))
+		     (setq dmn0 domain
 			   lct0 location*))))
-      (when dm0
+      (when dmn0
 	(format stream "}~%")))))
 
 (defun execute-registry (&key (id (working-registry-id)))
