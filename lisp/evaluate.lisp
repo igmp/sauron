@@ -13,7 +13,7 @@
 
 (defun parse-rkn-tz-time (string)
   (register-groups-bind (date time tz)
-      ("([-0-9]*)T([:0-9]*)(\\+[:0-9]*)$" string)
+      ("([-0-9]*)T([:0-9]*)(\\+[:0-9]+)?$" string)
     (values date time tz)))
 
 ;;; - Разбираем переданный XML файл.
@@ -44,7 +44,7 @@
 		 (parse-rkn-tz-time (second av-pair))))
 	      ((equal (first av-pair) "updateTimeUrgently")
 	       (multiple-value-setq (up-date-urg up-time-urg)
-		 (parse-rkn-time (second av-pair))))
+		 (parse-rkn-tz-time (second av-pair))))
 	      ((equal (first av-pair) "formatVersion")
 	       (setq format-version (second av-pair)))))
       (update-records [registry]
