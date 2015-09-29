@@ -14,10 +14,11 @@
 	:store-days        (store-days)))
 
 (defun config/ ()
-  (htmpl #p"config.html"
-	 (append (config-plist)
-		 (list :config-tab t)
-		 (general-plist))))
+  (with-output-to-string (*default-template-output*)
+    (ftmpl #p"config.html"
+	   (append (config-plist)
+		   (list :config-tab t)
+		   (sauron-plist)))))
 
 (defun config/set/ ()
   (setf (active-sauron)     (equal (post-parameter "active-sauron")     "yes")
@@ -63,9 +64,10 @@
 		  :working-total total))))
 
 (defun status/ ()
-  (htmpl #p"status.html"
-	 (append (status-plist)
-		 (list :status-tab t)
-		 (general-plist))))
+  (with-output-to-string (*default-template-output*)
+    (ftmpl #p"status.html"
+	   (append (status-plist)
+		   (list :status-tab t)
+		   (sauron-plist)))))
 
 ;;;;

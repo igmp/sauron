@@ -28,12 +28,13 @@
 					"order by _update_time desc, registry.id desc "))))))
 
 (defun registry/ ()
-  (let ((id (string-integer (get-parameter "id"))))
-    (if id
-	(htmpl #p"registry/one.html" (registry-plist :id id))
-	(htmpl #p"registry/list.html" (append (registry-plist)
-					      (list :registry-tab t)
-					      (general-plist))))))
+  (with-output-to-string (*default-template-output*)
+    (let ((id (string-integer (get-parameter "id"))))
+      (if id
+	  (ftmpl #p"registry/one.html" (registry-plist :id id))
+	  (ftmpl #p"registry/list.html" (append (registry-plist)
+						(list :registry-tab t)
+						(sauron-plist)))))))
 
 (defun registry/del/ ()
   (let ((id (string-integer (get-parameter "id"))))
@@ -73,7 +74,8 @@
   (redirect "/status/"))
 
 (defun registry/load/ ()
-  (htmpl #p"registry/load.html" (append (list :load-tab t)
-					(general-plist))))
+  (with-output-to-string (*default-template-output*)
+    (ftmpl #p"registry/load.html" (append (list :load-tab t)
+					  (sauron-plist)))))
 
 ;;;;

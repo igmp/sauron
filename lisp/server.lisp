@@ -119,20 +119,20 @@
 (defun root-redirect ()
   (redirect "/status/"))
 
-(defun general-plist ()
+(defun sauron-plist ()
   (append (list :sauron-version *sauron-version*)
 	  (prog1 (apply #'append (session-value :motd))
 	    (setf (session-value :motd) nil))))
 
-(defun htmpl (tmpl plist)
+(defun ftmpl (tmpl plist)
   (let ((*default-template-pathname* (concatenate 'string (tmpl-directory)))
         (*template-start-marker* "<")
         (*template-end-marker* ">")
         (*warn-on-creation* nil)
         (*force-default* t)
+	(*ignore-empty-lines* t)
         (*string-modifier* #'identity))
-    (with-output-to-string (*default-template-output*)
-      (fill-and-print-template tmpl plist))))
+    (fill-and-print-template tmpl plist)))
 
 (defun string-integer (string)
   (when string

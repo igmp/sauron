@@ -45,16 +45,21 @@
        do (format stream "~aroute       ~a/32~areject;~%" #\Tab address #\Tab))
     (format stream "}~%")))
 
-(defun generate-nginx-conf (&key (id (working-registry-id)) (file (nginx-conf)))
-  (with-open-file (stream file
-			  :direction :output
-			  :if-exists :supersede
-			  :if-does-not-exist :create)
-    ;; nginx doesn't allow duplicate locations within one domain
+(defgeneric generate-nginx-conf (type &key id file)
+  (:method :around (type &key (file (nginx-conf)) &allow-other-keys)
+    (with-open-file (*default-template-output* file
+					       :direction :output
+					       :if-exists :supersede
+					       :if-does-not-exist :create)
+      (call-next-method)))
+  (:method ((type (eql :rkn)) &key (id (working-registry-id)) &allow-other-keys)
+    ;; (declare (ignore file))
+    ;; Nginx doesn't allow duplicate locations within one domain.
+    ;; So we collect all locations into a hash tables (one hash table per domain).
+    ;; Then we write a config file from that unique hashes.
     (let ((dmnhash (make-hash-table :test 'equal)) ; all known domains
 	  (lcthash nil) ; all known locations for a current domain
-	  (dmn0 nil)    ; previous domain
-	  (lct0 nil))   ; previous location
+	  (dmn0 ""))    ; previous domain
       (loop for (content-id domain location) in
 	   (select [-id] [-domain] [-location]
 		   :from '([content] [resource])
@@ -64,39 +69,38 @@
 			       [= [content registry-id] id]]
 		   :order-by '([-domain] [-location]))
 	 do (let ((location* (url-encode* location)))
-	      (progn (when (string-not-equal domain dmn0)
-		       (when dmn0
-			 (format stream "~alocation / {~%" #\Tab)
-			 (format stream "~a~aproxy_pass $scheme://$host$request_uri;~%" #\Tab #\Tab)
-			 (format stream "~a~aproxy_set_header Host $http_host;~%" #\Tab #\Tab)
-			 (format stream "~a~aproxy_buffering off;~%" #\Tab #\Tab)
-			 (format stream "~a}~%" #\Tab)
-			 (format stream "}~%~%"))
-		       (setf lcthash (make-hash-table :test 'equal)
-			     (gethash dmn0 dmnhash) lcthash)
-		       (format stream "server {~%~aserver_name ~a;~%" #\Tab domain)
-		       (format stream "~alisten ~a;~%" #\Tab (nginx-port))
-		       (format stream "~aresolver ~a;~%~%" #\Tab (nginx-resolver)))
-		     (unless (gethash location* lcthash)
-		       (setf (gethash location* lcthash) t)
-		       (when (or (not (equal domain dmn0))
-				 (not (equal location* lct0)))
-			 (if (or (not location*)
-				 (and (eql location* "/") (root-means-domain)))
-			     (format stream "~alocation ~~ . { # ~a~%" #\Tab content-id)
-			     (format stream "~alocation = ~a { # ~a~%" #\Tab location* content-id))
-			 (format stream "~a~aproxy_pass ~a?$scheme://$host$request_uri;~%~a}~%" #\Tab #\Tab (block-url) #\Tab)))
-		     (setq dmn0 domain
-			   lct0 location*))))
-      (when dmn0
-	(format stream "}~%")))))
+	      (unless (string-equal domain dmn0)
+		(setq lcthash (make-hash-table :test 'equal)))
+	      (setf (gethash location* lcthash)
+		    (append (list :content-id content-id)
+			    (let ((root (or (not location*)
+					    (and (eql location* "/")
+						 (root-means-domain)))))
+			      (when root
+				(list :root root)))))
+	      (unless (string-equal domain dmn0)
+		(setf (gethash domain dmnhash) lcthash))
+	      (setq dmn0 domain))
+	 finally (setf (gethash domain dmnhash) lcthash)) ; last domain's locations
+      (ftmpl #p"nginx/rkn.conf"
+	     (list :nginx-port (nginx-port)
+		   :nginx-resolver (nginx-resolver)
+		   :block-url (block-url)
+		   :domain-list (loop for domain being each hash-key in dmnhash using (hash-value lcthash)
+				   collect (list :domain domain
+						 :resource-list (if (> (hash-table-count lcthash) 0)
+								    (loop for location being each hash-key in lcthash using (hash-value lctadd)
+								       collect (append (list :location (or location "/"))
+										       lctadd))
+								    (list (list :location "/"
+										:root (root-means-domain)))))))))))
 
 (defun execute-registry (&key (id (working-registry-id)))
   (setf (working-registry-id) id)
   (generate-registry-csv :id (and (active-sauron) id))
-  (generate-bird-conf    :id (and (active-sauron) id))
+  (generate-bird-conf :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
-  (generate-nginx-conf   :id (and (active-sauron) id))
+  (generate-nginx-conf :rkn :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 ;;;;
