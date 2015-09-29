@@ -31,19 +31,22 @@
 							      :where [= [content-id] content-id]
 							      :flatp t)))))
 
-(defun generate-bird-conf (&key (id (working-registry-id)) (file (bird-conf)))
-  (with-open-file (stream file
-			  :direction :output
-			  :if-exists :supersede
-			  :if-does-not-exist :create)
-    (format stream "protocol static ~a {~%" (bird-protocol))
-    (loop for (address) in (select [distinct [-address]]
-				   :from [ip-address]
-				   :where [and [= [registry-id] id]
-					       [is [-subnet] nil]]
-				   :order-by [-address])
-       do (format stream "~aroute       ~a/32~areject;~%" #\Tab address #\Tab))
-    (format stream "}~%")))
+(defgeneric generate-bird-conf (type &key id file)
+  (:method :around (type &key (file (bird-conf)) &allow-other-keys)
+    (with-open-file (*default-template-output* file
+					       :direction :output
+					       :if-exists :supersede
+					       :if-does-not-exist :create)
+      (call-next-method)))
+  (:method ((type (eql :static)) &key (id (working-registry-id)) &allow-other-keys)
+    (ftmpl #p"conf/bird-static.conf"
+	   (list :bird-protocol (bird-protocol)
+		 :address-list (loop for (address) in (select [distinct [-address]]
+							      :from [ip-address]
+							      :where [and [= [registry-id] id]
+									  [is [-subnet] nil]]
+							      :order-by [-address])
+				  collect (list :ip address))))))
 
 (defgeneric generate-nginx-conf (type &key id file)
   (:method :around (type &key (file (nginx-conf)) &allow-other-keys)
@@ -53,7 +56,6 @@
 					       :if-does-not-exist :create)
       (call-next-method)))
   (:method ((type (eql :rkn)) &key (id (working-registry-id)) &allow-other-keys)
-    ;; (declare (ignore file))
     ;; Nginx doesn't allow duplicate locations within one domain.
     ;; So we collect all locations into a hash tables (one hash table per domain).
     ;; Then we write a config file from that unique hashes.
@@ -82,7 +84,7 @@
 		(setf (gethash domain dmnhash) lcthash))
 	      (setq dmn0 domain))
 	 finally (setf (gethash domain dmnhash) lcthash)) ; last domain's locations
-      (ftmpl #p"nginx/rkn.conf"
+      (ftmpl #p"conf/nginx-rkn.conf"
 	     (list :nginx-port (nginx-port)
 		   :nginx-resolver (nginx-resolver)
 		   :block-url (block-url)
@@ -98,7 +100,7 @@
 (defun execute-registry (&key (id (working-registry-id)))
   (setf (working-registry-id) id)
   (generate-registry-csv :id (and (active-sauron) id))
-  (generate-bird-conf :id (and (active-sauron) id))
+  (generate-bird-conf :static :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
   (generate-nginx-conf :rkn :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
