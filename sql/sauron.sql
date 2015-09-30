@@ -133,13 +133,13 @@ create index resource_registry_idx on resource(registry_id);
 create index resource_content_idx on resource(content_id);
 
 
-create sequence ip_address_seq
+create sequence rkn_ip_address_seq
 	start 1
 	increment 1;
 
-create table ip_address (
+create table rkn_ip_address (
 	id				integer primary key
-					default nextval('ip_address_seq'),
+					default nextval('rkn_ip_address_seq'),
 	registry_id			integer not NULL
 					references registry(id),
 	content_id			integer not NULL
@@ -148,7 +148,7 @@ create table ip_address (
 	_subnet				boolean
 );
 
-create index ip_address_registry_idx on ip_address(registry_id);
-create index ip_address_content_idx on ip_address(content_id);
+create index rkn_ip_address_registry_idx on rkn_ip_address(registry_id);
+create index rkn_ip_address_content_idx on rkn_ip_address(content_id);
 
 ----

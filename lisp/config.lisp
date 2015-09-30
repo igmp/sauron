@@ -48,7 +48,7 @@
 						     :from [registry]
 						     :where [= [id] (working-registry-id)]))
 		:working-ip (caar (select [count [distinct [-address]]]
-					  :from [ip-address]
+					  :from [rkn-ip-address]
 					  :where [= [registry-id] (working-registry-id)])))
 	  (destructuring-bind (http https bad total)
 	      (first (query (concatenate 'string

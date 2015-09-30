@@ -27,7 +27,7 @@
 		 :order-by '([-id] [-domain] [-location]))
        do (format stream "~a; \"~a\"; \"~a\"; ~{~a~^, ~}~%"
 		  content-id* domain (or location "") (select [-address]
-							      :from [ip-address]
+							      :from [rkn-ip-address]
 							      :where [= [content-id] content-id]
 							      :flatp t)))))
 
@@ -42,7 +42,7 @@
     (ftmpl #p"conf/bird-static.conf"
 	   (list :bird-protocol (bird-protocol)
 		 :address-list (loop for (address) in (select [distinct [-address]]
-							      :from [ip-address]
+							      :from [rkn-ip-address]
 							      :where [and [= [registry-id] id]
 									  [is [-subnet] nil]]
 							      :order-by [-address])

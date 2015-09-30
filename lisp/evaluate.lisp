@@ -97,12 +97,12 @@
 		  ((equal (first resource) "url")
 		   (push (third resource) url-list))
 		  ((equal (first resource) "ip")
-		   (insert-records :into [ip-address]
+		   (insert-records :into [rkn-ip-address]
 				   :av-pairs `(([registry-id] ,id)
 					       ([content-id]  ,content-id)
 					       ([-address]    ,(third resource)))))
 		  ((equal (first resource) "ipSubnet")
-		   (insert-records :into [ip-address]
+		   (insert-records :into [rkn-ip-address]
 				   :av-pairs `(([registry-id] ,id)
 					       ([content-id]  ,content-id)
 					       ([-address]    ,(third resource))
@@ -140,21 +140,19 @@
 						   (if id "id" "_update_time")
 						   op
 						   (if id id time))))
-    (execute-command (concatenate 'string
-				  "delete from ip_address "
-				  "where registry_id in (select * from delete_registry) "))
-    (execute-command (concatenate 'string
-				  "delete from resource "
-				  "where registry_id in (select * from delete_registry) "))
-    (execute-command (concatenate 'string
-				  "delete from content "
-				  "where registry_id in (select * from delete_registry) "))
-    (execute-command (concatenate 'string
-				  "delete from registry "
-				  "where id in (select * from delete_registry) "))
-    (loop for (id) in (select [id]
-			      :from [delete-registry])
-       do (ignore-errors (delete-file (format nil "~a~a" (zip-directory) id))))))
+    (let ((delete (select [id]
+			  :from [delete-registry]
+			  :flatp t)))
+      (delete-records :from [rkn-ip-address]
+		      :where [in [registry-id] delete])
+      (delete-records :from [resource]
+		      :where [in [registry-id] delete])
+      (delete-records :from [content]
+		      :where [in [registry-id] delete])
+      (delete-records :from [registry]
+		      :where [in [id] delete])
+      (dolist (id delete)
+	(ignore-errors (delete-file (format nil "~a~a" (zip-directory) id)))))))
 
 (defun clear-outdated (&key (days (store-days)))
   (dolist (id (query (concatenate 'string
