@@ -151,4 +151,64 @@ create table rkn_ip_address (
 create index rkn_ip_address_registry_idx on rkn_ip_address(registry_id);
 create index rkn_ip_address_content_idx on rkn_ip_address(content_id);
 
+
+create sequence realm_seq
+	start 1
+	increment 1;
+
+create table realm (
+	id				integer primary key
+					default nextval('realm_seq'),
+	name				varchar(256),
+	block_url			varchar(1024),
+	active				boolean,
+	start_time			time with time zone,
+	stop_time			time with time zone
+);
+
+
+create sequence realm_internal_address_seq
+	start 1
+	increment 1;
+
+create table realm_internal_address (
+	id				integer primary key
+					default nextval('realm_internal_address_seq'),
+	realm_id			integer not NULL
+					references realm(id),
+	address				inet
+);
+
+create index realm_internal_address_realm_idx on realm_internal_address(realm_id);
+
+
+create sequence realm_external_address_seq
+	start 1
+	increment 1;
+
+create table realm_external_address (
+	id				integer primary key
+					default nextval('realm_external_address_seq'),
+	realm_id			integer not NULL
+					references realm(id),
+	address				inet
+);
+
+create index realm_external_address_realm_idx on realm_external_address(realm_id);
+
+
+create sequence black_list_seq
+	start 1
+	increment 1;
+
+create table black_list (
+	id				integer primary key
+					default nextval('black_list_seq'),
+	realm_id			integer not NULL
+					references realm(id),
+	domain				varchar(1024)
+);
+
+create index black_list_realm_idx on black_list(realm_id);
+
 ----

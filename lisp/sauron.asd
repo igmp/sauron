@@ -13,6 +13,7 @@
 	       (:file "config")
 	       (:file "evaluate")
 	       (:file "execute")
-	       (:file "registry")))
+	       (:file "registry")
+	       (:file "realm")))
 
 ;;;;

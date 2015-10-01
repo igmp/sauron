@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <title>
+      <tmpl_if 'id'>
+	<tmpl_var 'name'>
+      <tmpl_else>
+	Добавление абонента
+      </tmpl_if>
+      &mdash; &laquo;Саурон&raquo;
+    </title>
+    <link rel="stylesheet" type="text/css" href="/css/sauron.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <table id="cover">
+      <tr>
+	<td id="title" colspan="2">
+	  <h1>
+	    <tmpl_if 'id'>
+	      <tmpl_var 'name'>
+	    <tmpl_else>
+	      Добавление абонента
+	    </tmpl_if>
+	  </h1>
+	  <center><tmpl_include 'motd.html'></center>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="menu">
+	  <tmpl_include 'menu.html'>
+	</td>
+
+	<td id="main">
+	  <form action="/realm/set/" method="post">
+	    <input type="hidden" name="id" value="<tmpl_var 'id'>">
+	    <table width="80%">
+	      <tr>
+		<td class="li">
+		  Название / имя:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="name" value="<tmpl_var 'name'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Включено:
+		</td>
+		<td>
+		  <select name="active">
+		    <option value="yes" <tmpl_if 'active'>selected</tmpl_if>>да</option>
+		    <option value="no" <tmpl_unless 'active'>selected</tmpl_unless>>нет</option>
+		  </select>
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  URL сообщения о блокировке:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="block-url" value="<tmpl_var 'block-url'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Внешние IP адреса:
+		</td>
+		<td>
+		  <textarea name="realm-external-list" style="height: 10em; width: 100%;"
+			    ><tmpl_var 'realm-external-list'></textarea>
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Внутренние IP адреса:
+		</td>
+		<td>
+		  <textarea name="realm-internal-list" style="height: 10em; width: 100%;"
+			    ><tmpl_var 'realm-internal-list'></textarea>
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Чёрный список:
+		</td>
+		<td>
+		  <textarea name="black-list" style="height: 10em; width: 100%;"
+			    ><tmpl_var 'black-list'></textarea>
+		</td>
+	      </tr>
+	      <tr>
+		<td colspan="2" align="right">
+		  <input type="submit" value="Записать">
+		</td>
+	      </tr>
+	    </table>
+	  </form>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="signature" colspan="2">
+	  <tmpl_include "signature.html">
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>

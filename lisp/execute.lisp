@@ -49,13 +49,20 @@
 				  collect (list :ip address))))))
 
 (defgeneric generate-nginx-conf (type &key id file)
-  (:method :around (type &key (file (nginx-conf)) &allow-other-keys)
+  (:method :around (type &key file &allow-other-keys)
     (with-open-file (*default-template-output* file
 					       :direction :output
 					       :if-exists :supersede
 					       :if-does-not-exist :create)
       (call-next-method)))
-  (:method ((type (eql :rkn)) &key (id (working-registry-id)) &allow-other-keys)
+  (:method ((type (eql :black)) &key id file)
+    (declare (ignore id file))
+    (ftmpl #p"conf/nginx-black.conf"
+	   (append (list :nginx-port     (nginx-port)
+			 :nginx-resolver (nginx-resolver))
+		   (black-sheet))))
+  (:method ((type (eql :rkn)) &key (id (working-registry-id)) file)
+    (declare (ignore file))
     ;; Nginx doesn't allow duplicate locations within one domain.
     ;; So we collect all locations into a hash tables (one hash table per domain).
     ;; Then we write a config file from that unique hashes.
@@ -85,9 +92,9 @@
 	      (setq dmn0 domain))
 	 finally (setf (gethash domain dmnhash) lcthash)) ; last domain's locations
       (ftmpl #p"conf/nginx-rkn.conf"
-	     (list :nginx-port (nginx-port)
+	     (list :nginx-port     (nginx-port)
 		   :nginx-resolver (nginx-resolver)
-		   :block-url (block-url)
+		   :block-url      (block-url)
 		   :domain-list (loop for domain being each hash-key in dmnhash using (hash-value lcthash)
 				   collect (list :domain domain
 						 :resource-list (if (> (hash-table-count lcthash) 0)
@@ -102,7 +109,8 @@
   (generate-registry-csv :id (and (active-sauron) id))
   (generate-bird-conf :static :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
-  (generate-nginx-conf :rkn :id (and (active-sauron) id))
+  (generate-nginx-conf :rkn :file (nginx-rkn-conf) :id (and (active-sauron) id))
+  (generate-nginx-conf :black :file (nginx-black-conf))
   (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 ;;;;

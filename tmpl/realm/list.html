@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <title>Пользователи &mdash; &laquo;Саурон&raquo;</title>
+    <link rel="stylesheet" type="text/css" href="/css/sauron.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Refresh" content="3600">
+  </head>
+  <body>
+    <table id="cover">
+      <tr>
+	<td id="title" colspan="2">
+	  <h1>Пользователи</h1>
+	  <center><tmpl_include 'motd.html'></center>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="menu">
+	  <tmpl_include 'menu.html'>
+	</td>
+
+	<td id="main">
+	  <table width="80%">
+	    <tr>
+	      <th width="90%">
+		Название / имя
+	      </th>
+	      <th width="10%">
+		Статус
+	      </th>
+	    </tr>
+	    <tmpl_loop 'realm-list'>
+	      <tr>
+		<td>
+		  <a href="/realm/?id=<tmpl_var 'id'>"><tmpl_var 'name'></a>
+		</td>
+		<td>
+		  <tmpl_if 'active'>
+		    включен
+		  <tmpl_else>
+		    выключен
+		  </tmpl_if>
+		</td>
+	      </tr>
+	    </tmpl_loop>
+	    <tr>
+	      <td colspan="2" align="right">
+		<form action="/realm/add/" method="get">
+		  <input type="submit" value=" Добавить ">
+		</form>
+	      </td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+
+      <tr>
+	<td id="signature" colspan="2">
+	  <tmpl_include "signature.html">
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>

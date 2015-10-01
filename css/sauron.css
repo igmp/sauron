@@ -34,7 +34,8 @@ input.config-var {
 }
 
 td.li {
-    width: 50%;
+    vertical-align: top;
+    width: 40%;
 }
 
 td.proto {
