@@ -25,7 +25,7 @@
 					"from registry "
 					"left join resource on registry_id = registry.id "
 					"group by registry.id, _update_time, _update_time_urgently, completed "
-					"order by _update_time desc, registry.id desc "))))))
+					"order by _time desc, _update_time desc, registry.id desc "))))))
 
 (defun registry/ ()
   (with-output-to-string (*default-template-output*)

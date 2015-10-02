@@ -137,20 +137,21 @@
 				  "create temp table delete_registry on commit drop "
 				  "as select id from registry "
 				  "where " (format nil "~a ~a '~a' "
-						   (if id "id" "_update_time")
+						   (if id "id" "_time")
 						   op
 						   (if id id time))))
-    (let ((delete (select [id]
-			  :from [delete-registry]
-			  :flatp t)))
+    (let* ((delete (select [id]
+			   :from [delete-registry]
+			   :flatp t))
+	   (delete* (or delete (sql-expression :string "(0)"))))
       (delete-records :from [rkn-ip-address]
-		      :where [in [registry-id] delete])
+		      :where [in [registry-id] delete*])
       (delete-records :from [resource]
-		      :where [in [registry-id] delete])
+		      :where [in [registry-id] delete*])
       (delete-records :from [content]
-		      :where [in [registry-id] delete])
+		      :where [in [registry-id] delete*])
       (delete-records :from [registry]
-		      :where [in [id] delete])
+		      :where [in [id] delete*])
       (dolist (id delete)
 	(ignore-errors (delete-file (format nil "~a~a" (zip-directory) id)))))))
 
