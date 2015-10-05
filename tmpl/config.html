@@ -22,6 +22,11 @@
 	  <form action="/config/set/" method="post">
 	    <table width="80%">
 	      <tr>
+		<th colspan="2">
+		  Общие параметры
+		</th>
+	      </tr>
+	      <tr>
 		<td class="li">
 		  Включено:
 		</td>
@@ -34,6 +39,51 @@
 	      </tr>
 	      <tr>
 		<td class="li">
+		  Домашний каталог:
+		</td>
+		<td>
+		  <input class="config-var" type="text" disabled
+			 name="home-directory" value="<tmpl_var 'home-directory'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Порт Nginx:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="nginx-port" value="<tmpl_var 'nginx-port'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  DNS серверы Nginx:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="nginx-resolver" value="<tmpl_var 'nginx-resolver'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Обновление конфигурации Nginx:
+		</td>
+		<td>
+		  <input class="config-var" type="text" required
+			 name="nginx-reload" value="<tmpl_var 'nginx-reload'>">
+		</td>
+	      </tr>
+	    </table>
+	    <br>
+
+	    <table width="80%">
+	      <tr>
+		<th colspan="2">
+		  Роскомнадзор
+		</th>
+	      </tr>
+	      <tr>
+		<td class="li">
 		  Блокировать по корню весь домен:
 		</td>
 		<td>
@@ -41,15 +91,6 @@
 		    <option value="yes" <tmpl_if 'root-means-domain'>selected</tmpl_if>>да</option>
 		    <option value="no" <tmpl_unless 'root-means-domain'>selected</tmpl_unless>>нет</option>
 		  </select>
-		</td>
-	      </tr>
-	      <tr>
-		<td class="li">
-		  Домашний каталог:
-		</td>
-		<td>
-		  <input class="config-var" type="text" disabled
-			 name="home-directory" value="<tmpl_var 'home-directory'>">
 		</td>
 	      </tr>
 	      <tr>
@@ -81,38 +122,56 @@
 	      </tr>
 	      <tr>
 		<td class="li">
-		  Порт Nginx:
-		</td>
-		<td>
-		  <input class="config-var" type="text" required
-			 name="nginx-port" value="<tmpl_var 'nginx-port'>">
-		</td>
-	      </tr>
-	      <tr>
-		<td class="li">
-		  DNS серверы Nginx:
-		</td>
-		<td>
-		  <input class="config-var" type="text" required
-			 name="nginx-resolver" value="<tmpl_var 'nginx-resolver'>">
-		</td>
-	      </tr>
-	      <tr>
-		<td class="li">
-		  Обновление конфигурации Nginx:
-		</td>
-		<td>
-		  <input class="config-var" type="text" required
-			 name="nginx-reload" value="<tmpl_var 'nginx-reload'>">
-		</td>
-	      </tr>
-	      <tr>
-		<td class="li">
 		  URL сообщения о блокировке:
 		</td>
 		<td>
 		  <input class="config-var" type="text" required
 			 name="block-url" value="<tmpl_var 'block-url'>">
+		</td>
+	      </tr>
+	    </table>
+	    <br>
+
+	    <table width="80%">
+	      <tr>
+		<th colspan="2">
+		  Фильтрация абонентов
+		</th>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Граничные маршрутизаторы:
+		</td>
+		<td>
+		  <input class="config-var" type="text"
+			 name="routers" value="<tmpl_var 'routers'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Список IP адресов абонентов:
+		</td>
+		<td>
+		  <input class="config-var" type="text"
+			 name="list-black" value="<tmpl_var 'list-black'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Включить фильтрацию IP абонента:
+		</td>
+		<td>
+		  <input class="config-var" type="text"
+			 name="add-black" value="<tmpl_var 'add-black'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
+		  Выключить фильтрацию IP абонента:
+		</td>
+		<td>
+		  <input class="config-var" type="text"
+			 name="del-black" value="<tmpl_var 'del-black'>">
 		</td>
 	      </tr>
 	      <tr>

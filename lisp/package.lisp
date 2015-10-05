@@ -1,5 +1,5 @@
 (defpackage :sauron
-  (:use :cl-ppcre :clsql :common-lisp :html-template :hunchentoot)
+  (:use :cl-ppcre :clsql :common-lisp :html-template :hunchentoot :sb-ext)
   (:export #:annihilate-registry
 	   #:clear-outdated
 	   #:evaluate-registry

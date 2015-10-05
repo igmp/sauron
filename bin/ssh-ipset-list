@@ -1,0 +1,5 @@
+#!/bin/bash
+
+ssh $ROUTER "sudo ipset list sauron"
+
+####

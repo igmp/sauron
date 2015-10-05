@@ -32,14 +32,18 @@
        (setf ,var id))))
 
 (define-database-configured-variable active-sauron)
+(define-database-configured-variable add-black)
 (define-database-configured-variable bird-protocol)
 (define-database-configured-variable bird-reload)
 (define-database-configured-variable block-url)
+(define-database-configured-variable del-black)
 (define-database-configured-variable home-directory)
+(define-database-configured-variable list-black)
 (define-database-configured-variable nginx-port)
 (define-database-configured-variable nginx-reload)
 (define-database-configured-variable nginx-resolver)
 (define-database-configured-variable root-means-domain)
+(define-database-configured-variable routers)
 (define-database-configured-variable store-days)
 (define-database-configured-variable working-registry-id)
 

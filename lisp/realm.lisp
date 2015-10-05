@@ -126,4 +126,38 @@
 				    ([domain] ,domain)))))
     (redirect (format nil "/realm/?id=~a" id))))
 
+(defun propagate-realm (&key (routers (routers)) realm-id)
+  "Propagate realms' IP addresses across routers."
+  (let ((future (union (select [address]
+			       :from '([realm-external-address] [realm])
+			       :where [and [= [realm-id] [realm id]]
+					   [= [active] "true"]
+					   (if realm-id
+					       (sql-operation '= [realm id] realm-id)
+					       t)]
+			       :flatp t)
+		       (select [address]
+			       :from '([realm-internal-address] [realm])
+			       :where [and [= [realm-id] [realm id]]
+					   [= [active] "true"]
+					   (if realm-id
+					       (sql-operation '= [realm id] realm-id)
+					       t)]
+			       :flatp t))))
+    (dolist (router routers)
+      (let ((current (all-matches-as-strings "\\d+\\.\\d+\\.\\d+\\.\\d+"
+					     (with-output-to-string (stream)
+					       (run-program (list-black) nil
+							    :env `(("ROUTER" ,router))
+							    :output stream
+							    :search t)))))
+	(run-program (del-black) nil
+		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
+						  (set-difference current future :test #'equal))))
+		     :search t)
+	(run-program (add-black) nil
+		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
+						  (set-difference future current :test #'equal))))
+		     :search t)))))
+
 ;;;;

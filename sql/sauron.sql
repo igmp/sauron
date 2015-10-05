@@ -4,15 +4,19 @@ create table config (
 );
 
 insert into config (key, value) values
+('ADD-BLACK',          'true'),
 ('ACTIVE-SAURON',       NULL),
 ('BIRD-PROTOCOL',       'sauron'),
 ('BIRD-RELOAD',         'sudo /etc/init.d/bird reload'),
 ('BLOCK-URL',           'http://shtraf.net.ru/sauron/block/'),
+('DEL-BLACK',           'true'),
 ('HOME-DIRECTORY',      '/home/sauron/'),
+('LIST-BLACK',          'true'),
 ('NGINX-PORT',          '8080'),
 ('NGINX-RELOAD',        'sudo /etc/init.d/nginx reload'),
 ('NGINX-RESOLVER',      '127.0.0.1'),
 ('ROOT-MEANS-DOMAIN',   't'),
+('ROUTERS',             ''),
 ('STORE-DAYS',          '7'),
 ('WORKING-REGISTRY-ID', NULL);
 
