@@ -19,6 +19,40 @@
 			    :from [realm]
 			    :order-by [name])))))
 
+(defun black-time-plist* (tuple)
+  (destructuring-bind (id realm-id start stop) tuple
+    (list :id       id
+	  :realm-id realm-id
+	  :start    start
+	  :stop     stop)))
+
+(defun black-time-plist (&key realm-id)
+  (list :black-time
+	(mapcar #'black-time-plist*
+		(select [id] [realm-id]
+			(sql-operation 'function "to_char" [start] "HH24:MI")
+			(sql-operation 'function "to_char" [stop] "HH24:MI")
+			:from [black-time]
+			:where [= [realm-id] realm-id]
+			:order-by '([start] [stop])))))
+
+(defun realm/time/add/ ()
+  (let ((realm-id (post-parameter "realm-id"))
+	(start    (post-parameter "start"))
+	(stop     (post-parameter "stop")))
+    (insert-records :into [black-time]
+		    :av-pairs `(([realm-id] ,realm-id)
+				([start]    ,start)
+				([stop]     ,stop)))
+    (redirect (format nil "/realm/?id=~a" realm-id))))
+
+(defun realm/time/del/ ()
+  (let ((id       (get-parameter "id"))
+	(realm-id (get-parameter "realm-id")))
+    (delete-records :from [black-time]
+		    :where [= [id] id])
+    (redirect (format nil "/realm/?id=~a" realm-id))))
+
 (defun realm-internal-plist (&key realm-id)
   (list :realm-internal-list
 	(format nil "~{~a~^~%~}" (select [address]
@@ -35,7 +69,7 @@
 					 :order-by [address]
 					 :flatp t))))
 
-(defun black-plist (&key realm-id)
+(defun black-list-plist (&key realm-id)
   (list :black-list
 	(format nil "~{~a~^~%~}" (select [domain]
 					 :from [black-list]
@@ -67,9 +101,10 @@
     (let ((id (string-integer (get-parameter "id"))))
       (if id
 	  (ftmpl #p"realm/one.html" (append (realm-plist :id id)
+					    (black-time-plist     :realm-id id)
 					    (realm-internal-plist :realm-id id)
 					    (realm-external-plist :realm-id id)
-					    (black-plist :realm-id id)
+					    (black-list-plist     :realm-id id)
 					    (sauron-plist)))
 	  (ftmpl #p"realm/list.html" (append (realm-plist)
 					     (list :realm-tab t)

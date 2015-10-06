@@ -165,10 +165,24 @@ create table realm (
 					default nextval('realm_seq'),
 	name				varchar(256),
 	block_url			varchar(1024),
-	active				boolean,
-	start_time			time with time zone,
-	stop_time			time with time zone
+	active				boolean
 );
+
+
+create sequence black_time_seq
+	start 1
+	increment 1;
+
+create table black_time (
+	id				integer primary key
+					default nextval('black_time_seq'),
+	realm_id			integer not NULL
+					references realm(id),
+	start				time,
+	stop				time
+);
+
+create index black_time_realm_idx on black_time(realm_id);
 
 
 create sequence realm_internal_address_seq
