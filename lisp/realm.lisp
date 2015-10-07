@@ -44,6 +44,7 @@
 		    :av-pairs `(([realm-id] ,realm-id)
 				([start]    ,start)
 				([stop]     ,stop)))
+    (schedule-timer *black-time-switcher* (next-black-time-switch))
     (redirect (format nil "/realm/?id=~a" realm-id))))
 
 (defun realm/time/del/ ()
@@ -51,7 +52,19 @@
 	(realm-id (get-parameter "realm-id")))
     (delete-records :from [black-time]
 		    :where [= [id] id])
+    (schedule-timer *black-time-switcher* (next-black-time-switch))
     (redirect (format nil "/realm/?id=~a" realm-id))))
+
+(defun next-black-time-switch ()
+  (query "select extract(epoch from min(switch - now()))
+	  from (select current_date + start as switch
+		from black_time
+		union
+		select current_date + stop
+		from black_time) as schedule
+	  where switch > now()"
+	 :field-names nil
+	 :flatp t))
 
 (defun realm-internal-plist (&key realm-id)
   (list :realm-internal-list
@@ -78,13 +91,13 @@
 					 :flatp t))))
 
 (defun black-sheet ()
-  (list :entire-black-list (format nil "~{~a~^ ~}"
-				   (select [domain]
-					   :from '([black-list] [realm])
-					   :where [and [= [realm id] [realm-id]]
-						       [= [active] "true"]]
-					   :order-by [domain]
-					   :flatp t))
+  (list :blackness (format nil "~{~a~^ ~}"
+			   (select [domain]
+				   :from '([black-list] [realm])
+				   :where [and [= [realm id] [realm-id]]
+					       [= [active] "true"]]
+				   :order-by [domain]
+				   :flatp t))
 	:black-sheet (loop for (block-url domain address) in
 			  (select [block-url] [domain] [address]
 				  :from '([realm] [black-list] [realm-external-address])
@@ -182,15 +195,15 @@
     (dolist (router routers)
       (let ((current (all-matches-as-strings "\\d+\\.\\d+\\.\\d+\\.\\d+"
 					     (with-output-to-string (stream)
-					       (run-program (list-black) nil
+					       (run-program "/bin/sh" `("-c" ,(list-black))
 							    :env `(("ROUTER" ,router))
 							    :output stream
 							    :search t)))))
-	(run-program (del-black) nil
+	(run-program "/bin/sh" `("-c" ,(del-black))
 		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
 						  (set-difference current future :test #'equal))))
 		     :search t)
-	(run-program (add-black) nil
+	(run-program "/bin/sh" `("-c" ,(add-black))
 		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
 						  (set-difference future current :test #'equal))))
 		     :search t)))))

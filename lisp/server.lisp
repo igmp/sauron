@@ -106,16 +106,26 @@
 
 (defvar *server* nil)
 
+(defparameter *black-time-switcher*
+  (make-timer #'(lambda ()
+		  (with-sauron-db ()
+		    (generate-nginx-conf :black :file (nginx-black-conf))
+		    (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))))
+	      :name "black time switcher"
+	      :thread t)
+  "Next time nginx-black.conf should be regenerated.")
+
 (defun start-sauron ()
   (with-sauron-db ()
-    (start (setf *server* (make-instance 'sauron-acceptor))))
+    (start (setf *server* (make-instance 'sauron-acceptor)))
+    (schedule-timer *black-time-switcher* (next-black-time-switch)))
   (sb-thread:make-thread #'(lambda ()
 			     (with-sauron-db ()
 			       (execute-registry :id (working-registry-id))))
-			 :name (format nil "exec-registry ~a" (working-registry-id)))
-  #| start cron |#)
+			 :name (format nil "exec-registry ~a" (working-registry-id))))
 
 (defun stop-sauron ()
+  (unschedule-timer *black-time-switcher*)
   (stop *server*))
 
 (defun restart-sauron ()
