@@ -112,9 +112,11 @@
 				   :flatp t))
 	:black-sheet (loop for (block-url domain address) in
 			  (select [block-url] [domain] [address]
-				  :from '([realm] [black-list] [realm-external-address])
+				  :from '([realm] [black-list] [realm-external-address] [black-time])
 				  :where [and [= [realm id] [black-list realm-id]]
 					      [= [realm id] [realm-external-address realm-id]]
+					      [= [realm id] [black-time realm-id]]
+					      (sql-expression :string "now() - current_date between start and stop")
 					      [= [active] "true"]]
 				  :order-by '([address] [domain]))
 			collect (list :block-url block-url
