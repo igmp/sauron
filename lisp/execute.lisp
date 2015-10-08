@@ -110,7 +110,6 @@
   (generate-bird-conf :static :id (and (active-sauron) id))
   (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
   (generate-nginx-conf :rkn :file (nginx-rkn-conf) :id (and (active-sauron) id))
-  (generate-nginx-conf :black :file (nginx-black-conf))
   (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 ;;;;

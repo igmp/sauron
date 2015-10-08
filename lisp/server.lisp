@@ -118,14 +118,15 @@
 (defun start-sauron ()
   (with-sauron-db ()
     (start (setf *server* (make-instance 'sauron-acceptor)))
-    (schedule-timer *black-time-switcher* (next-black-time-switch)))
+    (schedule-black-timer))
   (sb-thread:make-thread #'(lambda ()
 			     (with-sauron-db ()
+			       (generate-nginx-conf :black :file (nginx-black-conf))
 			       (execute-registry :id (working-registry-id))))
-			 :name (format nil "exec-registry ~a" (working-registry-id))))
+			 :name (format nil "execute registry ~a" (working-registry-id))))
 
 (defun stop-sauron ()
-  (unschedule-timer *black-time-switcher*)
+  (schedule-black-timer nil)
   (stop *server*))
 
 (defun restart-sauron ()

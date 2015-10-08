@@ -36,6 +36,19 @@
 			:where [= [realm-id] realm-id]
 			:order-by '([start] [stop])))))
 
+(defun schedule-black-timer
+    (&optional (wait (first (query "select extract(epoch from min(switch - now()))
+				    from (select current_date + start as switch
+					  from black_time
+					  union
+					  select current_date + stop
+					  from black_time) as schedule
+				    where switch > now()"
+				   :flatp t))))
+  (if wait
+      (schedule-timer *black-time-switcher* wait)
+      (unschedule-timer *black-time-switcher*)))
+
 (defun realm/time/add/ ()
   (let ((realm-id (post-parameter "realm-id"))
 	(start    (post-parameter "start"))
@@ -44,7 +57,12 @@
 		    :av-pairs `(([realm-id] ,realm-id)
 				([start]    ,start)
 				([stop]     ,stop)))
-    (schedule-timer *black-time-switcher* (next-black-time-switch))
+    (sb-thread:make-thread #'(lambda ()
+			       (with-sauron-db ()
+				 (generate-nginx-conf :black :file (nginx-black-conf))
+				 (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))
+				 (schedule-black-timer)))
+			   :name (format nil "generate ~a" (nginx-black-conf)))
     (redirect (format nil "/realm/?id=~a" realm-id))))
 
 (defun realm/time/del/ ()
@@ -52,19 +70,13 @@
 	(realm-id (get-parameter "realm-id")))
     (delete-records :from [black-time]
 		    :where [= [id] id])
-    (schedule-timer *black-time-switcher* (next-black-time-switch))
+    (sb-thread:make-thread #'(lambda ()
+			       (with-sauron-db ()
+				 (generate-nginx-conf :black :file (nginx-black-conf))
+				 (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))
+				 (schedule-black-timer)))
+			   :name (format nil "generate ~a" (nginx-black-conf)))
     (redirect (format nil "/realm/?id=~a" realm-id))))
-
-(defun next-black-time-switch ()
-  (query "select extract(epoch from min(switch - now()))
-	  from (select current_date + start as switch
-		from black_time
-		union
-		select current_date + stop
-		from black_time) as schedule
-	  where switch > now()"
-	 :field-names nil
-	 :flatp t))
 
 (defun realm-internal-plist (&key realm-id)
   (list :realm-internal-list
@@ -143,7 +155,28 @@
 				       ([block-url] ,block-url)
 				       ([active]    ,active))
 			   :where [= [id] id])
-	   (push '(:motd-realm-set t) (session-value :motd)))
+	   (push '(:motd-realm-set t) (session-value :motd))
+	   (with-transaction ()
+	     (delete-records :from [realm-internal-address]
+			     :where [= [realm-id] id])
+	     (do-matches-as-strings (address "\\d+\\.\\d+\\.\\d+\\.\\d+" realm-internal-list nil :sharedp t)
+	       (insert-records :into [realm-internal-address]
+			       :av-pairs `(([realm-id] ,id)
+					   ([address]  ,address)))))
+	   (with-transaction ()
+	     (delete-records :from [realm-external-address]
+			     :where [= [realm-id] id])
+	     (do-matches-as-strings (address "\\d+\\.\\d+\\.\\d+\\.\\d+" realm-external-list nil :sharedp t)
+	       (insert-records :into [realm-external-address]
+			       :av-pairs `(([realm-id] ,id)
+					   ([address]  ,address)))))
+	   (with-transaction ()
+	     (delete-records :from [black-list]
+			     :where [= [realm-id] id])
+	     (do-matches-as-strings (domain "[^\\s]+" black-list nil :sharedp t)
+	       (insert-records :into [black-list]
+			       :av-pairs `(([realm-id] ,id)
+					   ([domain] ,domain))))))
 	  (t (setq id (sequence-next [realm-seq]))
 	     (insert-records :into [realm]
 			     :av-pairs `(([id]        ,id)
@@ -151,27 +184,12 @@
 					 ([block-url] ,block-url)
 					 ([active]    ,active)))
 	     (push '(:motd-realm-added t) (session-value :motd))))
-    (with-transaction ()
-      (delete-records :from [realm-internal-address]
-		      :where [= [realm-id] id])
-      (do-matches-as-strings (address "\\d+\\.\\d+\\.\\d+\\.\\d+" realm-internal-list nil :sharedp t)
-	(insert-records :into [realm-internal-address]
-			:av-pairs `(([realm-id] ,id)
-				    ([address]  ,address)))))
-    (with-transaction ()
-      (delete-records :from [realm-external-address]
-		      :where [= [realm-id] id])
-      (do-matches-as-strings (address "\\d+\\.\\d+\\.\\d+\\.\\d+" realm-external-list nil :sharedp t)
-	(insert-records :into [realm-external-address]
-			:av-pairs `(([realm-id] ,id)
-				    ([address]  ,address)))))
-    (with-transaction ()
-      (delete-records :from [black-list]
-		      :where [= [realm-id] id])
-      (do-matches-as-strings (domain "[^\\s]+" black-list nil :sharedp t)
-	(insert-records :into [black-list]
-			:av-pairs `(([realm-id] ,id)
-				    ([domain] ,domain)))))
+    (sb-thread:make-thread #'(lambda ()
+			       (with-sauron-db ()
+				 (generate-nginx-conf :black :file (nginx-black-conf))
+				 (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))
+				 (schedule-black-timer)))
+			   :name (format nil "generate ~a" (nginx-black-conf)))
     (redirect (format nil "/realm/?id=~a" id))))
 
 (defun propagate-realm (&key (routers (routers)) realm-id)

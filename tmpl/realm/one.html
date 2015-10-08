@@ -99,47 +99,49 @@
 	    </table>
 	  </form>
 
-	  <form action="/realm/time/add/" method="post">
-	    <input type="hidden" name="realm-id" value="<tmpl_var 'id'>">
-	    <table width="80%">
-	      <tr>
-		<td width="40%">
-		  Время ограничений:
-		</td>
-
-		<tmpl_loop 'black-time'>
-		  <td>
-		    <tt><tmpl_var 'start'></tt>
+	  <tmpl_if 'id'>
+	    <form action="/realm/time/add/" method="post">
+	      <input type="hidden" name="realm-id" value="<tmpl_var 'id'>">
+	      <table width="80%">
+		<tr>
+		  <td width="40%">
+		    Время ограничений:
 		  </td>
-		  <td align="center">
+
+		  <tmpl_loop 'black-time'>
+		    <td>
+		      <tt><tmpl_var 'start'></tt>
+		    </td>
+		    <td align="center">
+		      <tt>&mdash;</tt>
+		    </td>
+		    <td>
+		      <tt><tmpl_var 'stop'></tt>
+		    </td>
+		    <td align="right">
+		      <a href="/realm/time/del/?id=<tmpl_var 'id'>&realm-id=<tmpl_var 'realm-id'>">X</a>
+		    </td>
+		  </tr>
+		  <tr>
+		    <td></td>
+	          </tmpl_loop>
+
+		  <td width="10%">
+		    <input type="text" name="start" required>
+		  </td>
+		  <td width="5%" align="center">
 		    <tt>&mdash;</tt>
 		  </td>
-		  <td>
-		    <tt><tmpl_var 'stop'></tt>
+		  <td width="10%">
+		    <input type="text" name="stop" required>
 		  </td>
 		  <td align="right">
-		    <a href="/realm/time/del/?id=<tmpl_var 'id'>&realm-id=<tmpl_var 'realm-id'>">X</a>
+		    <input type="submit" value="Добавить">
 		  </td>
-	        </tr>
-	        <tr>
-		  <td></td>
-	        </tmpl_loop>
-
-		<td width="10%">
-		  <input type="text" name="start" required>
-		</td>
-		<td width="5%" align="center">
-		  <tt>&mdash;</tt>
-		</td>
-		<td width="10%">
-		  <input type="text" name="stop" required>
-		</td>
-		<td align="right">
-		  <input type="submit" value="Добавить">
-		</td>
-	      </tr>
-	    </table>
-	  </form>
+		</tr>
+	      </table>
+	    </form>
+          </tmpl_if>
 	</td>
       </tr>
 

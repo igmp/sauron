@@ -56,7 +56,7 @@
 				 (evaluate-registry :id id)
 				 (when (equal exec "yes")
 				   (execute-registry :id id))))
-			   :name (format nil "process-registry ~a" id))
+			   :name (format nil "process registry ~a" id))
     (push '(:motd-registry-loaded t) (session-value :motd))
     (when (equal exec "yes")
       (push '(:motd-registry-executed t) (session-value :motd)))
