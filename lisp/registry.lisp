@@ -3,7 +3,7 @@
 
 (defun registry-plist* (tuple)
   (let ((working-registry-id (parse-integer (or (working-registry-id) "0"))))
-    (destructuring-bind (id up-time up-time-urg completed resource-count) tuple
+    (destructuring-bind (resource-count id up-time up-time-urg completed) tuple
       (list :id             id
 	    :up-time        up-time
 	    :up-time-urg    up-time-urg
@@ -17,15 +17,16 @@
 				      :from '([registry] [resource])
 				      :where [and [= [registry id] id]
 						  [= [registry-id] [registry id]]]
-				      :group-by '([registry id] [-update-time] [-update-time-urgently] [completed]))))
+						  :group-by '([registry id] [-update-time] [-update-time-urgently] [completed]))))
       (list :registry-list
-	    (mapcar #'registry-plist*
-		    (query (concatenate 'string
-					"select registry.id, _update_time, _update_time_urgently, completed, count(resource.id) "
-					"from registry "
-					"left join resource on registry_id = registry.id "
-					"group by registry.id, _update_time, _update_time_urgently, completed "
-					"order by _time desc, _update_time desc, registry.id desc "))))))
+	    (loop for tuple in (query "select resource_count, id, _update_time, _update_time_urgently, completed
+					  from registry
+					  order by _time desc, _update_time desc, id desc ")
+	       do (unless (nth 0 tuple)
+		    (setf (nth 0 tuple) (caar (select [count [*]]
+						      :from [resource]
+						      :where [= [registry-id] (nth 1 tuple)]))))
+	       collect (registry-plist* tuple)))))
 
 (defun registry/ ()
   (with-output-to-string (*default-template-output*)

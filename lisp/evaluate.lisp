@@ -36,6 +36,7 @@
   (with-open-file (stream file :external-format '(:cp1251))
     (delete-file stream) ; prevent any external intrusion
     (let ((registry (xmls:parse stream))
+	  (resource-count 0)
 	  up-date up-time up-tz up-date-urg up-time-urg format-version)
       ;; "header" of the registry
       (dolist (av-pair (cadr registry))
@@ -108,27 +109,30 @@
 					       ([-address]    ,(third resource))
 					       ([-subnet]     ,t))))))
 	  (dolist (domain domain-list)
-	    (if url-list
-		(dolist (url url-list)
-		  (register-groups-bind ((#'string-downcase proto domain) location entire)
-		      ("(?:(http|https)://([^/]+)(/.*)?)|^(.*)$" url)
-		    (if entire
-			(insert-records :into [resource]
-					:av-pairs `(([registry-id] ,id)
-						    ([content-id]  ,content-id)
-						    ([-url]        ,url)))
-			(insert-records :into [resource]
-					:av-pairs `(([registry-id] ,id)
-						    ([content-id]  ,content-id)
-						    ([ssl]         ,(not (equal proto "http")))
-						    ([-domain]     ,domain)
-						    ([-location]   ,location))))))
-		(insert-records :into [resource]
-				:av-pairs `(([registry-id] ,id)
-					    ([content-id]  ,content-id)
-					    ([-domain]     ,(string-downcase domain))))))))
+	    (cond (url-list
+		   (dolist (url url-list)
+		     (incf resource-count)
+		     (register-groups-bind ((#'string-downcase proto domain) location entire)
+			 ("(?:(http|https)://([^/]+)(/.*)?)|^(.*)$" url)
+		       (if entire
+			   (insert-records :into [resource]
+					   :av-pairs `(([registry-id] ,id)
+						       ([content-id]  ,content-id)
+						       ([-url]        ,url)))
+			   (insert-records :into [resource]
+					   :av-pairs `(([registry-id] ,id)
+						       ([content-id]  ,content-id)
+						       ([ssl]         ,(not (equal proto "http")))
+						       ([-domain]     ,domain)
+						       ([-location]   ,location)))))))
+		  (t (incf resource-count)
+		     (insert-records :into [resource]
+				     :av-pairs `(([registry-id] ,id)
+						 ([content-id]  ,content-id)
+						 ([-domain]     ,(string-downcase domain)))))))))
       (update-records [registry]
-		      :av-pairs '(([completed] t))
+		      :av-pairs `(([completed]      t)
+				  ([resource-count] ,resource-count))
 		      :where [= [id] id]))))
 
 (defun annihilate-registry (&key id time (op '=))

@@ -72,7 +72,8 @@ create table registry (
 	_update_time			timestamp with time zone,
 	_update_time_urgently		timestamp with time zone,
 	_format_version			varchar(16),
-	completed			boolean
+	completed			boolean,
+	resource_count			integer
 );
 
 create index registry_time_idx on registry(_time);
