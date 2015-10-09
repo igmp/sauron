@@ -43,8 +43,10 @@
     (setf (working-registry-id) (last-registry-id)))
   (sb-thread:make-thread #'(lambda ()
 			     (with-sauron-db ()
-			       (execute-registry :id (working-registry-id))))
-			 :name (format nil "exec-registry ~a" (working-registry-id)))
+			       (generate-nginx-conf :black :file (nginx-black-conf))
+			       (execute-registry :id (working-registry-id))
+			       (propagate-realm)))
+			 :name (format nil "execute registry ~a" (working-registry-id)))
   (push '(:motd-config-set t) (session-value :motd))
   (redirect "/config/"))
 

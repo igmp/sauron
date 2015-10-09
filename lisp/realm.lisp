@@ -190,42 +190,9 @@
 			       (with-sauron-db ()
 				 (generate-nginx-conf :black :file (nginx-black-conf))
 				 (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))
-				 (schedule-black-timer)))
+				 (schedule-black-timer)
+				 (propagate-realm)))
 			   :name (format nil "generate ~a" (nginx-black-conf)))
     (redirect (format nil "/realm/?id=~a" id))))
-
-(defun propagate-realm (&key (routers (routers)) realm-id)
-  "Propagate realms' IP addresses across routers."
-  (let ((future (union (select [address]
-			       :from '([realm-external-address] [realm])
-			       :where [and [= [realm-id] [realm id]]
-					   [= [active] "true"]
-					   (if realm-id
-					       (sql-operation '= [realm id] realm-id)
-					       t)]
-			       :flatp t)
-		       (select [address]
-			       :from '([realm-internal-address] [realm])
-			       :where [and [= [realm-id] [realm id]]
-					   [= [active] "true"]
-					   (if realm-id
-					       (sql-operation '= [realm id] realm-id)
-					       t)]
-			       :flatp t))))
-    (dolist (router routers)
-      (let ((current (all-matches-as-strings "\\d+\\.\\d+\\.\\d+\\.\\d+"
-					     (with-output-to-string (stream)
-					       (run-program "/bin/sh" `("-c" ,(list-black))
-							    :env `(("ROUTER" ,router))
-							    :output stream
-							    :search t)))))
-	(run-program "/bin/sh" `("-c" ,(del-black))
-		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
-						  (set-difference current future :test #'equal))))
-		     :search t)
-	(run-program "/bin/sh" `("-c" ,(add-black))
-		     :env `(("ADDRESSES" ,(format nil "~{~a~^ ~}"
-						  (set-difference future current :test #'equal))))
-		     :search t)))))
 
 ;;;;

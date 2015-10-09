@@ -1,5 +1,5 @@
 #!/bin/bash
 
-ssh $ROUTER "sudo ipset list sauron"
+ssh $ROUTER "sudo /usr/sbin/ipset list sauron"
 
 ####

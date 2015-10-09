@@ -2,7 +2,7 @@
 
 ssh $ROUTER \
     "for addr in $ADDRESSES; do
-	sudo ipset add sauron $addr
+	sudo /usr/sbin/ipset add sauron \$addr
      done"
 
 ####
