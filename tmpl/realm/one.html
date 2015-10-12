@@ -104,7 +104,7 @@
 	      <input type="hidden" name="realm-id" value="<tmpl_var 'id'>">
 	      <table width="80%">
 		<tr>
-		  <td width="40%">
+		  <td width="35%">
 		    Время ограничений:
 		  </td>
 
@@ -117,6 +117,9 @@
 		    </td>
 		    <td>
 		      <tt><tmpl_var 'stop'></tt>
+		    </td>
+		    <td>
+		      <tmpl_var 'wday'>
 		    </td>
 		    <td align="right">
 		      <a href="/realm/time/del/?id=<tmpl_var 'id'>&realm-id=<tmpl_var 'realm-id'>">X</a>
@@ -134,6 +137,18 @@
 		  </td>
 		  <td width="10%">
 		    <input type="text" name="stop" required>
+		  </td>
+		  <td width="5%">
+		    <select name="wday">
+		      <option>--</option>
+		      <option value="1">пн</option>
+		      <option value="2">вт</option>
+		      <option value="3">ср</option>
+		      <option value="4">чт</option>
+		      <option value="5">пт</option>
+		      <option value="6">сб</option>
+		      <option value="7">вс</option>
+		    </select>
 		  </td>
 		  <td align="right">
 		    <input type="submit" value="Добавить">

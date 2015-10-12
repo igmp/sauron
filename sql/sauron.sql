@@ -179,6 +179,7 @@ create table black_time (
 					default nextval('black_time_seq'),
 	realm_id			integer not NULL
 					references realm(id),
+	wday				smallint,
 	start				time,
 	stop				time
 );

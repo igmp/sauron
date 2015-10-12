@@ -10,6 +10,8 @@
 (defparameter *db-user* (or (sb-posix:getenv "DB_USER") "sauron"))
 (defparameter *db-password* (or (sb-posix:getenv "DB_PASSWORD") ""))
 
+(defparameter *wday-arr* #("пн" "вт" "ср" "чт" "пт" "сб" "вс"))
+
 (defmacro with-sauron-db (() &rest body)
   `(with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
 				      :pool t)

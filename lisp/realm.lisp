@@ -20,29 +20,36 @@
 			    :order-by [name])))))
 
 (defun black-time-plist* (tuple)
-  (destructuring-bind (id realm-id start stop) tuple
+  (destructuring-bind (id realm-id wday start stop) tuple
     (list :id       id
 	  :realm-id realm-id
+	  :wday     (when wday
+		      (aref *wday-arr* (1- wday)))
 	  :start    start
 	  :stop     stop)))
 
 (defun black-time-plist (&key realm-id)
   (list :black-time
 	(mapcar #'black-time-plist*
-		(select [id] [realm-id]
+		(select [id] [realm-id] [wday]
 			(sql-operation 'function "to_char" [start] "HH24:MI")
 			(sql-operation 'function "to_char" [stop] "HH24:MI")
 			:from [black-time]
 			:where [= [realm-id] realm-id]
-			:order-by '([start] [stop])))))
+			:order-by '([wday] [start] [stop])))))
 
 (defun schedule-black-timer
     (&optional (wait (first (query "select extract(epoch from min(switch - now()))
 				    from (select current_date + start as switch
 					  from black_time
+					  where wday = extract(isodow from now())
+					    or wday is NULL
 					  union
 					  select current_date + stop
-					  from black_time) as schedule
+					  from black_time
+					  where wday = extract(isodow from now())
+					    or wday is NULL
+					 ) as schedule
 				    where switch > now()"
 				   :flatp t))))
   (if wait
@@ -51,10 +58,12 @@
 
 (defun realm/time/add/ ()
   (let ((realm-id (post-parameter "realm-id"))
+	(wday     (post-parameter "wday"))
 	(start    (post-parameter "start"))
 	(stop     (post-parameter "stop")))
     (insert-records :into [black-time]
 		    :av-pairs `(([realm-id] ,realm-id)
+				([wday]     ,(if (equal wday "") nil wday))
 				([start]    ,start)
 				([stop]     ,stop)))
     (sb-thread:make-thread #'(lambda ()
@@ -117,6 +126,8 @@
 					      [= [realm id] [realm-external-address realm-id]]
 					      [= [realm id] [black-time realm-id]]
 					      (sql-expression :string "now() - current_date between start and stop")
+					      [or [= [wday] (sql-expression :string "extract(isodow from now())")]
+						  [is [wday] nil]]
 					      [= [active] "true"]]
 				  :order-by '([address] [domain]))
 			collect (list :block-url block-url
