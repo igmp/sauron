@@ -3,9 +3,8 @@
 
 (defun extract-registry (zip)
   (sb-posix:chdir (tmp-directory))
-  (sb-ext:run-program "unzip"
-		      `(,zip "dump.xml")
-		      :search t))
+  (run-program "unzip" `(,zip "dump.xml")
+	       :search t))
 
 (defun parse-rkn-time (string)
   (register-groups-bind (date time) ("^([-0-9]*)T([:0-9]*)$" string)

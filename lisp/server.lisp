@@ -96,13 +96,14 @@
 
 (defmethod acceptor-dispatch-request ((acceptor sauron-acceptor) request)
   (in-package :sauron)
-  (mapc (lambda (dispatcher)
-	  (let ((handler (funcall dispatcher request)))
-	    (when handler
-	      (return-from acceptor-dispatch-request
-                (with-sauron-db ()
-		  (let ((*tmp-directory* (tmp-directory)))
-		    (funcall handler)))))))
+  (mapc #'(lambda (dispatcher)
+	    (let ((handler (funcall dispatcher request)))
+	      (when handler
+		(return-from acceptor-dispatch-request
+		  (with-sauron-db ()
+		    (let ((*session-max-time* 7200)
+			  (*tmp-directory* (tmp-directory)))
+		      (funcall handler)))))))
 	*sauron-dispatch-table*)
   (call-next-method))
 
@@ -112,7 +113,7 @@
   (make-timer #'(lambda ()
 		  (with-sauron-db ()
 		    (generate-nginx-conf :black :file (nginx-black-conf))
-		    (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload)))))
+		    (run-program "/bin/sh" `("-c" ,(nginx-reload)))))
 	      :name "black time switcher"
 	      :thread t)
   "Next time nginx-black.conf should be regenerated.")
@@ -120,12 +121,12 @@
 (defun start-sauron ()
   (with-sauron-db ()
     (start (setf *server* (make-instance 'sauron-acceptor)))
-    (schedule-black-timer))
-  (sb-thread:make-thread #'(lambda ()
-			     (with-sauron-db ()
-			       (generate-nginx-conf :black :file (nginx-black-conf))
-			       (execute-registry :id (working-registry-id))))
-			 :name (format nil "execute registry ~a" (working-registry-id))))
+    (schedule-black-timer)
+    (make-thread #'(lambda ()
+		     (with-sauron-db ()
+		       (generate-nginx-conf :black :file (nginx-black-conf))
+		       (execute-registry :id (working-registry-id))))
+		 :name (format nil "execute registry ~a" (working-registry-id)))))
 
 (defun stop-sauron ()
   (schedule-black-timer nil)

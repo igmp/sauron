@@ -108,9 +108,9 @@
   (setf (working-registry-id) id)
   (generate-registry-csv :id (and (active-sauron) id))
   (generate-bird-conf :static :id (and (active-sauron) id))
-  (sb-ext:run-program "/bin/sh" `("-c" ,(bird-reload)))
+  (run-program "/bin/sh" `("-c" ,(bird-reload)))
   (generate-nginx-conf :rkn :file (nginx-rkn-conf) :id (and (active-sauron) id))
-  (sb-ext:run-program "/bin/sh" `("-c" ,(nginx-reload))))
+  (run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
 (defun propagate-realm (&key (routers (routers)) realm-id)
   "Propagate realms' IP addresses across routers."
