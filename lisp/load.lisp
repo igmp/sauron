@@ -7,10 +7,11 @@
   "Maximum number of request before giving up.")
 
 (defun last-seen-dump-date ()
-  (apply #'values (first (select [-urgently] [-date]
-				 :from [last-info]
-				 :order-by '(([time] :desc))
-				 :limit 1))))
+  (apply #'values (or (first (append (select [-urgently] [-date]
+					 :from [last-info]
+					 :order-by '(([time] :desc))
+					 :limit 1)))
+		      '(0 0))))
 
 (defun get-last-dump-date ()
   (dotimes (i *max-request-number*)
@@ -93,7 +94,7 @@
 					       "update request "
 					       "set time = now(), "
 					       (format nil "  _result = '~a', " result)
-					       (format nil "  _comment = '~a' " comment)
+					       (format nil "  _comment = '~a' " (or comment ""))
 					       (format nil "where _code = '~a' " code)
 					       "returning id "))))
 	  (if (equal result "true")
@@ -117,7 +118,8 @@
       (progn (extract-registry (format nil "~a~a" (zip-directory) id))
 	     (evaluate-registry :id id)
 	     (when exec
-	       (execute-registry :id id)))
+	       (execute-registry :id id))
+	     (clear-outdated))
     (file-error () (annihilate-registry :id id))))
 
 (defun download-registry (&key force)
@@ -174,7 +176,6 @@
 	   (push '(:motd-registry-loaded t) (session-value :motd))
 	   (when (equal exec "yes")
 	     (push '(:motd-registry-executed t) (session-value :motd)))))
-    (clear-outdated)
     (redirect (format nil "/registry/#~a" id))))
 
 ;;;;

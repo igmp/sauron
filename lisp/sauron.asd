@@ -3,7 +3,7 @@
 
 (defsystem :sauron
   :author "Igor Plekhov <penguin@shtraf.net.ru>"
-  :version "0.14"
+  :version "0.15"
 
   :depends-on (cl-base64 cl-ppcre clsql-postgresql-socket drakma html-template hunchentoot
 			uiop xmls)

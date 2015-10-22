@@ -135,9 +135,9 @@
 		 :name (format nil "execute registry ~a" (working-registry-id)))
     (setq *downloader* (make-thread #'(lambda ()
 					(with-sauron-db ()
-					  (when (length (check-period))
-					    (download-registry))
-					  (sleep (* 60 (parse-integer (check-period) :junk-allowed t)))))
+					  (loop (when (length (check-period))
+						  (download-registry))
+					     (sleep (* 60 (parse-integer (check-period) :junk-allowed t))))))
 				    :name "download registry"))))
 
 (defun stop-sauron ()
