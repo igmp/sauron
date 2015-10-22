@@ -21,11 +21,20 @@
 	  <form action="/registry/come/" method="post" enctype="multipart/form-data">
 	    <table width="80%">
 	      <tr>
-		<td class="li">
+		<td rowspan="2" class="li">
 		  Архив РКН с реестром:
 		</td>
 		<td>
-		  <input type="file" name="file" required>
+		  <input type="radio" name="from" value="rkn" id="rkn" checked
+			 onClick="document.getElementById('file-input').value = ''">
+		  с сайта Роскомнадзора
+		</td>
+	      </tr>
+	      <tr>
+		<td>
+		  <input type="radio" name="from" value="file" id="file-radio">
+		  <input type="file" name="file" id="file-input"
+			 onChange="document.getElementById('file-radio').checked = true">
 		</td>
 	      </tr>
 	      <tr>
@@ -41,7 +50,7 @@
 	      </tr>
 	      <tr>
 		<td colspan="2" align="right">
-		  <input type="submit" value="Загрузить">
+		  <input type="submit" value="Выполнить">
 		</td>
 	      </tr>
 	    </table>

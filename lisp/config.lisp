@@ -8,6 +8,7 @@
 	:bird-reload       (bird-reload)
 	:bird-protocol     (bird-protocol)
 	:block-url         (block-url)
+	:check-period      (check-period)
 	:home-directory    (home-directory)
 	:list-black        (list-black)
 	:nginx-port        (nginx-port)
@@ -31,6 +32,7 @@
 	(bird-reload)    (post-parameter "bird-reload")
 	(bird-protocol)  (post-parameter "bird-protocol")
 	(block-url)      (post-parameter "block-url")
+	(check-period)   (post-parameter "check-period")
 	(del-black)      (post-parameter "del-black")
 	(list-black)     (post-parameter "list-black")
 	(nginx-port)     (post-parameter "nginx-port")
@@ -51,7 +53,14 @@
   (redirect "/config/"))
 
 (defun status-plist ()
-  (append (list :last-info-date (caar (query "select to_timestamp(max(_date / 1000)) from last_info"))
+  (append (list :last-info-date (caar (select (sql-operation 'function "to_timestamp" [/ [-date] 1000])
+					      :from [last-info]
+					      :order-by '(([time] :desc))
+					      :limit 1))
+		:last-info-urgently (caar (select (sql-operation 'function "to_timestamp" [/ [-urgently] 1000])
+						  :from [last-info]
+						  :order-by '(([time] :desc))
+						  :limit 1))
 		:last-registry-time (caar (select [max [-update-time]]
 						  :from [registry]))
 		:working-registry-time (caar (select [-update-time]

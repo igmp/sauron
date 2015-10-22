@@ -112,40 +112,50 @@
   (generate-nginx-conf :rkn :file (nginx-rkn-conf) :id (and (active-sauron) id))
   (run-program "/bin/sh" `("-c" ,(nginx-reload))))
 
-(defun propagate-realm (&key (routers (routers)) realm-id)
-  "Propagate realms' IP addresses across routers."
-  (let ((future (union (select [address]
-			       :from '([realm-external-address] [realm])
-			       :where [and [= [realm-id] [realm id]]
-					   [= [active] "true"]
-					   (if realm-id
-					       (sql-operation '= [realm id] realm-id)
-					       t)]
-			       :flatp t)
-		       (select [address]
-			       :from '([realm-internal-address] [realm])
-			       :where [and [= [realm-id] [realm id]]
-					   [= [active] "true"]
-					   (if realm-id
-					       (sql-operation '= [realm id] realm-id)
-					       t)]
-			       :flatp t))))
-    (dolist (router (all-matches-as-strings "[^\\s]+" routers))
-      (let ((current (all-matches-as-strings "\\d+\\.\\d+\\.\\d+\\.\\d+"
-					     (with-output-to-string (stream)
-					       (run-program "/bin/sh" `("-c" ,(list-black))
-							    :environment `(,(format nil "ROUTER=~a" router))
-							    :output stream
-							    :search t)))))
-	(run-program "/bin/sh" `("-c" ,(del-black))
-		     :environment `(,(format nil "ROUTER=~a" router)
-				    ,(format nil "ADDRESSES=~{~a~^ ~}"
-					     (set-difference current future :test #'equal)))
-		     :search t)
-	(run-program "/bin/sh" `("-c" ,(add-black))
-		     :environment (setq *a* `(,(format nil "ROUTER=~a" router)
-				    ,(format nil "ADDRESSES=~{~a~^ ~}"
-					     (set-difference future current :test #'equal))))
-		     :search t)))))
+(defun registry-plist* (tuple)
+  (let ((working-registry-id (parse-integer (or (working-registry-id) "0"))))
+    (destructuring-bind (resource-count id up-time up-time-urg completed) tuple
+      (list :id             id
+	    :up-time        up-time
+	    :up-time-urg    up-time-urg
+	    :completed      completed
+	    :resource-count resource-count
+	    :workingp       (equal working-registry-id id)))))
+
+(defun registry-plist (&key id)
+  (if id
+      (registry-plist* (first (select [registry id] [-update-time] [-update-time-urgently] [completed] [count [resource id]]
+				      :from '([registry] [resource])
+				      :where [and [= [registry id] id]
+						  [= [registry-id] [registry id]]]
+						  :group-by '([registry id] [-update-time] [-update-time-urgently] [completed]))))
+      (list :registry-list
+	    (loop for tuple in (query "select resource_count, id, _update_time, _update_time_urgently, completed
+					  from registry
+					  order by _time desc, _update_time desc, id desc ")
+	       do (unless (nth 0 tuple)
+		    (setf (nth 0 tuple) (caar (select [count [*]]
+						      :from [resource]
+						      :where [= [registry-id] (nth 1 tuple)]))))
+	       collect (registry-plist* tuple)))))
+
+(defun registry/ ()
+  (with-output-to-string (*default-template-output*)
+    (let ((id (string-integer (get-parameter "id"))))
+      (if id
+	  (ftmpl #p"registry/one.html" (registry-plist :id id))
+	  (ftmpl #p"registry/list.html" (append (registry-plist)
+						(list :registry-tab t)
+						(sauron-plist)))))))
+
+(defun registry/exec/ ()
+  (setf (active-sauron) "exec")
+  (let ((id (string-integer (get-parameter "id"))))
+    (make-thread #'(lambda ()
+		     (with-sauron-db ()
+		       (execute-registry :id id)))
+		 :name (format nil "exec-registry ~a" id))
+    (push '(:motd-registry-executed t) (session-value :motd)))
+  (redirect "/status/"))
 
 ;;;;

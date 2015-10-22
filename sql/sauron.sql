@@ -9,7 +9,9 @@ insert into config (key, value) values
 ('BIRD-PROTOCOL',       'sauron'),
 ('BIRD-RELOAD',         'sudo /etc/init.d/bird reload'),
 ('BLOCK-URL',           'http://shtraf.net.ru/sauron/block/'),
+('CHECK-PERIOD',        '60'),
 ('DEL-BLACK',           'true'),
+('DUMP-FORMAT',         '2.2'),
 ('HOME-DIRECTORY',      '/home/sauron/'),
 ('LIST-BLACK',          'true'),
 ('NGINX-PORT',          '8080'),
@@ -28,14 +30,16 @@ create sequence last_info_seq
 create table last_info (
 	id				integer primary key
 					default nextval('last_info_seq'),
+	time				timestamp with time zone
+					default now(),
 	_date				bigint,
-	_date_urgently			bigint,
-	_web_service_version		varchar(32),
-	_dump_format_version		varchar(32),
-	_doc_version			varchar(32)
+	_urgently			bigint,
+	_web_service			varchar(32),
+	_dump_format			varchar(32),
+	_doc				varchar(32)
 );
 
-create index last_info_date_idx on last_info(_date);
+create index last_info_time_idx on last_info(time);
 
 
 create sequence request_seq
@@ -45,13 +49,15 @@ create sequence request_seq
 create table request (
 	id				integer primary key
 					default nextval('request_seq'),
-	_time				timestamp with time zone,
-	_status				boolean,
+	time				timestamp with time zone
+					default now(),
+	_result				boolean,
 	_comment			varchar(1024),
-	_id				varchar(1024)
+	_code				varchar(1024)
 );
 
-create index request_time_idx on request(_time);
+create index request_time_idx on request(time);
+create index request_code_idx on request(_code);
 
 
 create sequence registry_seq
@@ -63,13 +69,10 @@ create table registry (
 					default nextval('registry_seq'),
 	request_id			integer
 					references request(id),
-	_time				timestamp with time zone
-					not NULL default now(),
-	_status				boolean,
-	_comment			varchar(1024),
-	_code				integer,
-	_zip				bytea,
-	_update_time			timestamp with time zone,
+	_time				timestamp with time zone not NULL
+					default now(),
+	_update_time			timestamp with time zone
+					default now(),
 	_update_time_urgently		timestamp with time zone,
 	_format_version			varchar(16),
 	completed			boolean,

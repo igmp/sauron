@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<soap-env:Envelope soap-env:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+		   xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+		   xmlns:tns="http://vigruzki.rkn.gov.ru/OperatorRequest/">
+  <soap-env:Body>
+    <tns:getLastDumpDate/>
+  </soap-env:Body>
+</soap-env:Envelope>

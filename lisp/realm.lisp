@@ -134,6 +134,42 @@
 				      :domain    domain
 				      :address   address))))
 
+(defun propagate-realm (&key (routers (routers)) realm-id)
+  "Propagate realms' IP addresses across routers."
+  (let ((future (union (select [address]
+			       :from '([realm-external-address] [realm])
+			       :where [and [= [realm-id] [realm id]]
+					   [= [active] "true"]
+					   (if realm-id
+					       (sql-operation '= [realm id] realm-id)
+					       t)]
+			       :flatp t)
+		       (select [address]
+			       :from '([realm-internal-address] [realm])
+			       :where [and [= [realm-id] [realm id]]
+					   [= [active] "true"]
+					   (if realm-id
+					       (sql-operation '= [realm id] realm-id)
+					       t)]
+			       :flatp t))))
+    (dolist (router (all-matches-as-strings "[^\\s]+" routers))
+      (let ((current (all-matches-as-strings "\\d+\\.\\d+\\.\\d+\\.\\d+"
+					     (with-output-to-string (stream)
+					       (run-program "/bin/sh" `("-c" ,(list-black))
+							    :environment `(,(format nil "ROUTER=~a" router))
+							    :output stream
+							    :search t)))))
+	(run-program "/bin/sh" `("-c" ,(del-black))
+		     :environment `(,(format nil "ROUTER=~a" router)
+				    ,(format nil "ADDRESSES=~{~a~^ ~}"
+					     (set-difference current future :test #'equal)))
+		     :search t)
+	(run-program "/bin/sh" `("-c" ,(add-black))
+		     :environment `(,(format nil "ROUTER=~a" router)
+				    ,(format nil "ADDRESSES=~{~a~^ ~}"
+					     (set-difference future current :test #'equal)))
+		     :search t)))))
+
 (defun realm/ ()
   (with-output-to-string (*default-template-output*)
     (let ((id (string-integer (get-parameter "id"))))

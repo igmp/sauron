@@ -86,7 +86,7 @@
 		<td class="li">
 		  Блокировать по корню весь домен:
 		</td>
-		<td>
+		<td valign="top">
 		  <select name="root-means-domain">
 		    <option value="yes" <tmpl_if 'root-means-domain'>selected</tmpl_if>>да</option>
 		    <option value="no" <tmpl_unless 'root-means-domain'>selected</tmpl_unless>>нет</option>
@@ -97,16 +97,25 @@
 		<td class="li">
 		  Время хранения (дни):
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text" required
 			 name="store-days" value="<tmpl_var 'store-days'>">
 		</td>
 	      </tr>
 	      <tr>
 		<td class="li">
+		  Периодичность проверки (минуты):
+		</td>
+		<td valign="top">
+		  <input class="config-var" type="text" required
+			 name="check-period" value="<tmpl_var 'check-period'>">
+		</td>
+	      </tr>
+	      <tr>
+		<td class="li">
 		  Протокол Bird:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text" required
 			 name="bird-protocol" value="<tmpl_var 'bird-protocol'>">
 		</td>
@@ -115,7 +124,7 @@
 		<td class="li">
 		  Обновление конфигурации Bird:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text" required
 			 name="bird-reload" value="<tmpl_var 'bird-reload'>">
 		</td>
@@ -124,7 +133,7 @@
 		<td class="li">
 		  URL сообщения о блокировке:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text" required
 			 name="block-url" value="<tmpl_var 'block-url'>">
 		</td>
@@ -142,7 +151,7 @@
 		<td class="li">
 		  Граничные маршрутизаторы:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text"
 			 name="routers" value="<tmpl_var 'routers'>">
 		</td>
@@ -151,7 +160,7 @@
 		<td class="li">
 		  Список IP адресов абонентов:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text"
 			 name="list-black" value="<tmpl_var 'list-black'>">
 		</td>
@@ -160,7 +169,7 @@
 		<td class="li">
 		  Включить фильтрацию IP абонента:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text"
 			 name="add-black" value="<tmpl_var 'add-black'>">
 		</td>
@@ -169,7 +178,7 @@
 		<td class="li">
 		  Выключить фильтрацию IP абонента:
 		</td>
-		<td>
+		<td valign="top">
 		  <input class="config-var" type="text"
 			 name="del-black" value="<tmpl_var 'del-black'>">
 		</td>

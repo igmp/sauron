@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<soap-env:Envelope soap-env:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+		   xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"
+		   xmlns:tns="http://vigruzki.rkn.gov.ru/OperatorRequest/">
+  <soap-env:Body>
+    <tns:sendRequest>
+      <requestFile><tmpl_var 'request-file'></requestFile>
+      <signatureFile><tmpl_var 'signature-file'></signatureFile>
+      <dumpFormatVersion><tmpl_var 'dump-format'></dumpFormatVersion>
+    </tns:sendRequest>
+  </soap-env:Body>
+</soap-env:Envelope>

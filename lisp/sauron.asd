@@ -3,9 +3,9 @@
 
 (defsystem :sauron
   :author "Igor Plekhov <penguin@shtraf.net.ru>"
-  :version "0.13"
+  :version "0.14"
 
-  :depends-on (cl-ppcre clsql-postgresql-socket html-template hunchentoot
+  :depends-on (cl-base64 cl-ppcre clsql-postgresql-socket drakma html-template hunchentoot
 			uiop xmls)
   :serial t
   :components ((:file "package")
@@ -13,7 +13,7 @@
 	       (:file "config")
 	       (:file "evaluate")
 	       (:file "execute")
-	       (:file "registry")
+	       (:file "load")
 	       (:file "realm")))
 
 ;;;;

@@ -38,7 +38,9 @@
 (define-database-configured-variable bird-protocol)
 (define-database-configured-variable bird-reload)
 (define-database-configured-variable block-url)
+(define-database-configured-variable check-period)
 (define-database-configured-variable del-black)
+(define-database-configured-variable dump-format)
 (define-database-configured-variable home-directory)
 (define-database-configured-variable list-black)
 (define-database-configured-variable nginx-port)
@@ -107,7 +109,11 @@
 	*sauron-dispatch-table*)
   (call-next-method))
 
-(defvar *server* nil)
+(defvar *server* nil
+  "Sauron's HTTP server.")
+
+(defvar *downloader* nil
+  "Download RKN's registries.")
 
 (defparameter *black-time-switcher*
   (make-timer #'(lambda ()
@@ -121,15 +127,22 @@
 (defun start-sauron ()
   (with-sauron-db ()
     (start (setf *server* (make-instance 'sauron-acceptor)))
-    (schedule-black-timer)
     (make-thread #'(lambda ()
 		     (with-sauron-db ()
 		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (execute-registry :id (working-registry-id))))
-		 :name (format nil "execute registry ~a" (working-registry-id)))))
+		       (execute-registry :id (working-registry-id))
+		       (schedule-black-timer)))
+		 :name (format nil "execute registry ~a" (working-registry-id)))
+    (setq *downloader* (make-thread #'(lambda ()
+					(with-sauron-db ()
+					  (when (length (check-period))
+					    (download-registry))
+					  (sleep (* 60 (parse-integer (check-period) :junk-allowed t)))))
+				    :name "download registry"))))
 
 (defun stop-sauron ()
   (schedule-black-timer nil)
+  (terminate-thread *downloader*)
   (stop *server*))
 
 (defun restart-sauron ()
@@ -191,5 +204,30 @@ for EXTERNAL-FORMAT is the value of *HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
 							  :end (1+ index)
 							  :external-format external-format)
 			do (format s "%~2,'0x" octet))))))))
+
+(defun file-base64 (filename)
+  (with-open-file (stream filename
+			  :element-type '(unsigned-byte 8))
+    (let ((seq (make-array (file-length stream)
+			   :element-type '(unsigned-byte 8)
+			   :fill-pointer t)))
+      (setf (fill-pointer seq) (read-sequence seq stream))
+      (usb8-array-to-base64-string seq))))
+
+(defparameter *unix-epoch-difference*
+  (encode-universal-time 0 0 0 1 1 1970 0))
+
+(defun universal-to-unix-time (universal-time)
+  (- universal-time *unix-epoch-difference*))
+
+(defun unix-to-universal-time (unix-time)
+  (+ unix-time *unix-epoch-difference*))
+
+(defun unix-time-string (time)
+  (multiple-value-bind (second minute hour mday month year wday daylight-p zone)
+      (decode-universal-time (unix-to-universal-time time))
+    (declare (ignore wday daylight-p))
+    (format nil "~d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~@d"
+	    year month mday hour minute second (- zone))))
 
 ;;;;

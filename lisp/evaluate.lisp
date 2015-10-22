@@ -47,6 +47,7 @@
 		 (parse-rkn-tz-time (second av-pair))))
 	      ((equal (first av-pair) "formatVersion")
 	       (setq format-version (second av-pair)))))
+      (acceptor-log-message *server* :info "evaluating registry: ~a ~a~a" up-date up-time up-tz)
       (update-records [registry]
 		      :av-pairs `(([id]                    ,id)
 				  ([-update-time]          ,(format nil "~a ~a ~a" up-date up-time up-tz))
@@ -164,6 +165,15 @@
 				  "from registry "
 				  "where _update_time + interval '" days " days' < now() ")
 		     :flatp t))
-    (annihilate-registry :id id)))
+    (annihilate-registry :id id)
+    (delete-records :from [request]
+		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-days)))])
+    (delete-records :from [last-info]
+		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-days)))])))
+
+(defun registry/del/ ()
+  (let ((id (string-integer (get-parameter "id"))))
+    (annihilate-registry :id id))
+  (redirect "/registry/"))
 
 ;;;;
