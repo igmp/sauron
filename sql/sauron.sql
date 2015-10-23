@@ -11,6 +11,7 @@ insert into config (key, value) values
 ('BLOCK-URL',           'http://shtraf.net.ru/sauron/block/'),
 ('CHECK-PERIOD',        '60'),
 ('DEL-BLACK',           'true'),
+('DOWNLOAD-PERIOD',     '23'),
 ('DUMP-FORMAT',         '2.2'),
 ('HOME-DIRECTORY',      '/home/sauron/'),
 ('LIST-BLACK',          'true'),

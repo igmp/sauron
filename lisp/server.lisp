@@ -52,6 +52,7 @@
 (define-database-configured-variable block-url)
 (define-database-configured-variable check-period)
 (define-database-configured-variable del-black)
+(define-database-configured-variable download-period)
 (define-database-configured-variable dump-format)
 (define-database-configured-variable home-directory)
 (define-database-configured-variable list-black)
@@ -118,7 +119,10 @@
 (defvar *server* nil
   "Sauron's HTTP server.")
 
-(defvar *downloader* nil
+(defvar *check-registry* nil
+  "Check for RKN's registry freshness.")
+
+(defvar *download-registry* nil
   "Download RKN's registries.")
 
 (defparameter *black-time-switcher*
@@ -139,16 +143,25 @@
 		       (execute-registry :id (working-registry-id))
 		       (schedule-black-timer)))
 		 :name (format nil "execute registry ~a" (working-registry-id)))
-    (setq *downloader* (make-thread #'(lambda ()
-					(with-sauron-db ()
-					  (loop (when (length (check-period))
-						  (download-registry))
-					     (sleep (* 60 (parse-integer (check-period) :junk-allowed t))))))
-				    :name "download registry"))))
+    (setq *download-registry*
+	  (make-thread #'(lambda ()
+			   (with-sauron-db ()
+			     (loop (download-registry)
+				(wait-on-semaphore *download-semaphore*
+						   :timeout (* 60 60 (parse-integer (download-period)))))))
+		       :name "download registry"))
+    (setq *check-registry*
+	  (make-thread #'(lambda ()
+			   (sleep 300) ; wait 5 minutes for initial download to complete
+			   (with-sauron-db ()
+			     (loop (check-registry)
+				(sleep (* 60 (parse-integer (check-period)))))))
+		       :name "check registry"))))
 
 (defun stop-sauron ()
   (schedule-black-timer nil)
-  (terminate-thread *downloader*)
+  (terminate-thread *check-registry*)
+  (terminate-thread *download-registry*)
   (stop *server*))
 
 (defun restart-sauron ()

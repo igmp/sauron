@@ -122,29 +122,33 @@
 	     (clear-outdated))
     (file-error () (annihilate-registry :id id))))
 
-(defun download-registry (&key force)
-  (multiple-value-bind (last-urgently last-date) (last-seen-dump-date)
-    (multiple-value-bind (urgently date) (get-last-dump-date-ex)
-      (acceptor-log-message *server* :info "last dump: date ~a, urgently ~a"
-			    (unix-time-string (/ date 1000))
-			    (unix-time-string (/ urgently 1000)))
-      (when (or (> urgently last-urgently)
-		(> date (+ last-date (* 23 60 60 1000))) ; 23 hours
-		force)
-	(multiple-value-bind (code comment) (send-request)
-	  (unless code
-	    (acceptor-log-message *server* :error "while sending request: ~a" comment)
-	    (return-from download-registry))
-	  (sleep 120) ; wait 2 minutes while RKN is preparing an answer
-	  (loop (multiple-value-bind (id code* comment) (get-result code)
-		  (cond ((= code* 0)
-			 (sleep 60)) ; wait 1 minute before next try
-			((= code* 1)
-			 (process-registry :id id)
-			 (return id))
-			((< code* 0)
-			 (acceptor-log-message *server* :error "while getting result of ~a: ~a" code comment)
-			 (return))))))))))
+(defvar *download-semaphore*
+  (make-semaphore :name "download semaphore")
+  "If it went up then it's now time to download a new registry.")
+
+(defun check-registry ()
+  (multiple-value-bind (urgently date) (get-last-dump-date-ex)
+    (acceptor-log-message *server* :info "last dump: date ~a, urgently ~a"
+			  (unix-time-string (/ date 1000))
+			  (unix-time-string (/ urgently 1000)))
+    (when (> urgently (last-seen-dump-date))
+      (signal-semaphore *download-semaphore*))))
+
+(defun download-registry ()
+  (multiple-value-bind (code comment) (send-request)
+    (unless code
+      (acceptor-log-message *server* :error "while sending request: ~a" comment)
+      (return-from download-registry))
+    (sleep 120) ; wait 2 minutes while RKN is preparing an answer
+    (loop (multiple-value-bind (id code* comment) (get-result code)
+	    (cond ((= code* 0)
+		   (sleep 60)) ; wait 1 minute before next try
+		  ((= code* 1)
+		   (process-registry :id id)
+		   (return id))
+		  ((< code* 0)
+		   (acceptor-log-message *server* :error "while getting result of ~a: ~a" code comment)
+		   (return)))))))
 
 (defun registry/load/ ()
   (with-output-to-string (*default-template-output*)
@@ -154,27 +158,24 @@
 (defun registry/come/ ()
   (let* ((from (post-parameter "from"))
 	 (file (post-parameter "file"))
-	 (exec (post-parameter "exec"))
+	 (exec (equal (post-parameter "exec") "yes"))
 	 (id (sequence-next [registry-seq]))
 	 (zip (format nil "~a~a" (zip-directory) id)))
     (cond ((equal from "rkn")
-	   (make-thread #'(lambda ()
-			    (with-sauron-db ()
-			      (download-registry :force t)))
-			:name "force download")
+	   (signal-semaphore *download-semaphore*)
 	   (push '(:motd-registry-loading t) (session-value :motd)))
 	  ((equal from "file")
+	   (insert-records :into [registry]
+			   :av-pairs `(([id] ,id)))
+	   (rename-file (first file) zip)
 	   (make-thread #'(lambda ()
 			    (with-sauron-db ()
 			      (with-transaction ()
-				(insert-records :into [registry]
-						:av-pairs `(([id] ,id)))
-				(rename-file (first file) zip))
-			      (process-registry :id   id
-						:exec (equal exec "yes"))))
+				(process-registry :id   id
+						  :exec exec))))
 			:name (format nil "process registry ~a" id))
 	   (push '(:motd-registry-loaded t) (session-value :motd))
-	   (when (equal exec "yes")
+	   (when exec
 	     (push '(:motd-registry-executed t) (session-value :motd)))))
     (redirect (format nil "/registry/#~a" id))))
 

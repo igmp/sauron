@@ -44,6 +44,7 @@ td.proto {
 
 td.working-count {
     text-align: right;
+    vertical-align: top;
 }
 
 /**/

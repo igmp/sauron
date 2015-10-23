@@ -2,7 +2,16 @@
   (:use :cl-base64 :cl-ppcre :clsql :common-lisp :html-template :hunchentoot :sb-ext :sb-thread)
   (:import-from :drakma
 		#:http-request)
-  (:export #:annihilate-registry
+  (:export #:*db-host*
+	   #:*db-name*
+	   #:*db-password*
+	   #:*db-port*
+	   #:*db-user*
+	   #:*download-semaphore*
+	   #:*sauron-version*
+
+	   #:annihilate-registry
+	   #:check-registry
 	   #:clear-outdated
 	   #:download-registry
 	   #:evaluate-registry
