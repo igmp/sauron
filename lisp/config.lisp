@@ -1,6 +1,12 @@
 (in-package :sauron)
 (file-enable-sql-reader-syntax)
 
+(defun last-registry-id ()
+  (caar (select [id]
+		:from [registry]
+		:where [= [-update-time] [select [max [-update-time]]
+						 :from [registry]]])))
+
 (defun config-plist ()
   (list :active-sauron     (active-sauron)
 	:add-black         (add-black)

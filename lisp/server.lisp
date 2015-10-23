@@ -12,10 +12,22 @@
 
 (defparameter *wday-arr* #("пн" "вт" "ср" "чт" "пт" "сб" "вс"))
 
-(defmacro with-sauron-db (() &rest body)
-  `(with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
-				      :pool t)
-     ,@body))
+(defparameter clsql-sys::*retry-on-socket-error* nil
+  "Whether retry to connect in case of some network failure.")
+
+(defmethod clsql-sys:database-connect :around (connection-spec database-type)
+  (if clsql-sys::*retry-on-socket-error*
+      (handler-case (call-next-method)
+	(sb-bsd-sockets:socket-error ()
+	  (sleep 1)
+	  (clsql-sys:database-connect connection-spec database-type)))
+      (call-next-method)))
+
+(defmacro with-sauron-db ((&key (retry t)) &rest body)
+  `(let ((clsql-sys::*retry-on-socket-error* ,retry))
+     (with-database (*default-database* (list *db-host* *db-name* *db-user* *db-password* *db-port*)
+					:pool t)
+       ,@body)))
 
 (defmacro define-database-configured-variable (var)
   `(let (,var)
@@ -50,12 +62,6 @@
 (define-database-configured-variable routers)
 (define-database-configured-variable store-days)
 (define-database-configured-variable working-registry-id)
-
-(defun last-registry-id ()
-  (caar (select [id]
-		:from [registry]
-		:where [= [-update-time] [select [max [-update-time]]
-						 :from [registry]]])))
 
 (defmacro define-home-variable (var param)
   `(defun ,var ()
