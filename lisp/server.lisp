@@ -116,7 +116,7 @@
 	*sauron-dispatch-table*)
   (call-next-method))
 
-(defvar *server* nil
+(defvar *http-server* nil
   "Sauron's HTTP server.")
 
 (defvar *check-registry* nil
@@ -136,7 +136,7 @@
 
 (defun start-sauron ()
   (with-sauron-db ()
-    (start (setf *server* (make-instance 'sauron-acceptor)))
+    (start (setf *http-server* (make-instance 'sauron-acceptor)))
     (make-thread #'(lambda ()
 		     (with-sauron-db ()
 		       (generate-nginx-conf :black :file (nginx-black-conf))
@@ -162,7 +162,7 @@
   (schedule-black-timer nil)
   (terminate-thread *check-registry*)
   (terminate-thread *download-registry*)
-  (stop *server*))
+  (stop *http-server*))
 
 (defun restart-sauron ()
   (stop-sauron)

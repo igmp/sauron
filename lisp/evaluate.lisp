@@ -47,7 +47,7 @@
 		 (parse-rkn-tz-time (second av-pair))))
 	      ((equal (first av-pair) "formatVersion")
 	       (setq format-version (second av-pair)))))
-      (acceptor-log-message *server* :info "evaluating registry: ~a ~a~a" up-date up-time up-tz)
+      (acceptor-log-message *http-server* :info "evaluating registry: ~a ~a~a" up-date up-time up-tz)
       (update-records [registry]
 		      :av-pairs `(([id]                    ,id)
 				  ([-update-time]          ,(format nil "~a ~a ~a" up-date up-time up-tz))

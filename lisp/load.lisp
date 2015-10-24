@@ -128,7 +128,7 @@
 
 (defun check-registry ()
   (multiple-value-bind (urgently date) (get-last-dump-date-ex)
-    (acceptor-log-message *server* :info "last dump: date ~a, urgently ~a"
+    (acceptor-log-message *http-server* :info "last dump: date ~a, urgently ~a"
 			  (unix-time-string (/ date 1000))
 			  (unix-time-string (/ urgently 1000)))
     (when (> urgently (last-seen-dump-date))
@@ -137,7 +137,7 @@
 (defun download-registry ()
   (multiple-value-bind (code comment) (send-request)
     (unless code
-      (acceptor-log-message *server* :error "while sending request: ~a" comment)
+      (acceptor-log-message *http-server* :error "while sending request: ~a" comment)
       (return-from download-registry))
     (sleep 120) ; wait 2 minutes while RKN is preparing an answer
     (loop (multiple-value-bind (id code* comment) (get-result code)
@@ -147,7 +147,7 @@
 		   (process-registry :id id)
 		   (return id))
 		  ((< code* 0)
-		   (acceptor-log-message *server* :error "while getting result of ~a: ~a" code comment)
+		   (acceptor-log-message *http-server* :error "while getting result of ~a: ~a" code comment)
 		   (return)))))))
 
 (defun registry/load/ ()
