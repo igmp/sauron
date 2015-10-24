@@ -23,7 +23,7 @@
 	:nginx-resolver    (nginx-resolver)
 	:root-means-domain (root-means-domain)
 	:routers           (routers)
-	:store-days        (store-days)))
+	:store-interval    (store-interval)))
 
 (defun config/ ()
   (with-output-to-string (*default-template-output*)
@@ -47,7 +47,7 @@
 	(nginx-reload)    (post-parameter "nginx-reload")
 	(nginx-resolver)  (post-parameter "nginx-resolver")
 	(routers)         (post-parameter "routers")
-	(store-days)      (post-parameter "store-days"))
+	(store-interval)  (post-parameter "store-interval"))
   (when (and (active-sauron)
 	     (not (working-registry-id)))
     (setf (working-registry-id) (last-registry-id)))

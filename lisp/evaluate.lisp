@@ -159,7 +159,7 @@
       (dolist (id delete)
 	(ignore-errors (delete-file (format nil "~a~a" (zip-directory) id)))))))
 
-(defun clear-outdated (&key (days (store-days)))
+(defun clear-outdated (&key (days (store-interval)))
   (dolist (id (query (concatenate 'string
 				  "select id "
 				  "from registry "
@@ -167,9 +167,9 @@
 		     :flatp t))
     (annihilate-registry :id id)
     (delete-records :from [request]
-		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-days)))])
+		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))])
     (delete-records :from [last-info]
-		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-days)))])))
+		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))])))
 
 (defun registry/del/ ()
   (let ((id (string-integer (get-parameter "id"))))

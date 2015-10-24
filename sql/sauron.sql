@@ -20,7 +20,7 @@ insert into config (key, value) values
 ('NGINX-RESOLVER',      '127.0.0.1'),
 ('ROOT-MEANS-DOMAIN',   't'),
 ('ROUTERS',             ''),
-('STORE-DAYS',          '7'),
+('STORE-INTERVAL',      '7'),
 ('WORKING-REGISTRY-ID', NULL);
 
 

@@ -61,7 +61,7 @@
 (define-database-configured-variable nginx-resolver)
 (define-database-configured-variable root-means-domain)
 (define-database-configured-variable routers)
-(define-database-configured-variable store-days)
+(define-database-configured-variable store-interval)
 (define-database-configured-variable working-registry-id)
 
 (defmacro define-home-variable (var param)
