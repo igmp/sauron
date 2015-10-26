@@ -3,7 +3,8 @@
 	:sb-concurrency :sb-ext :sb-thread)
   (:import-from :drakma
 		#:http-request)
-  (:export #:*check-semaphore*
+  (:export #:*black-semaphore*
+	   #:*check-semaphore*
 	   #:*db-host*
 	   #:*db-name*
 	   #:*db-password*
@@ -15,6 +16,8 @@
 	   #:*sauron-version*
 
 	   #:annihilate-registry
+	   #:black-switch
+	   #:black-time-interval
 	   #:check-registry
 	   #:clear-outdated
 	   #:download-registry

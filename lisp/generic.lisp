@@ -113,14 +113,12 @@ is a property list with :id property.  It can serve as an argument list to
 (defvar *check-registry* nil
   "Check for RKN's registry renewal.")
 
-(defvar *black-time-switcher*
-  (make-timer #'(lambda ()
-		  (with-sauron-db ()
-		    (generate-nginx-conf :black :file (nginx-black-conf))
-		    (run-program "/bin/sh" `("-c" ,(nginx-reload)))))
-	      :name "black time switcher"
-	      :thread t)
-  "Next time nginx-black.conf should be regenerated.")
+(defvar *black-semaphore*
+  (make-semaphore :name "black semaphore")
+  "If it went up then it is needed to renew limits implied by black lists.")
+
+(defvar *black-switch* nil
+  "Imply black lists.")
 
 (defun sauron-plist ()
   (append (list :sauron-version *sauron-version*)

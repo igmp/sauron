@@ -38,23 +38,26 @@
 			:where [= [realm-id] realm-id]
 			:order-by '([wday] [start] [stop])))))
 
-(defun schedule-black-timer
-    (&optional (wait (first (query "select extract(epoch from min(switch - now()))
-				    from (select current_date + start as switch
-					  from black_time
-					  where wday = extract(isodow from now())
-					    or wday is NULL
-					  union
-					  select current_date + stop
-					  from black_time
-					  where wday = extract(isodow from now())
-					    or wday is NULL
-					 ) as schedule
-				    where switch > now()"
-				   :flatp t))))
-  (if wait
-      (schedule-timer *black-time-switcher* wait)
-      (unschedule-timer *black-time-switcher*)))
+(defun black-time-interval ()
+  "Interval in seconds from now to when black list limits should be switched."
+  (caar (query "select extract(epoch from min(switch - now()))
+		from (select current_date + start as switch
+		      from black_time
+		      where wday = extract(isodow from now())
+			or wday is NULL
+		      union
+		      select current_date + stop
+		      from black_time
+		      where wday = extract(isodow from now())
+		        or wday is NULL
+		     ) as schedule
+		where switch > now()")))
+
+(defun black-switch ()
+  "Imply black lists."
+  (generate-nginx-conf :black :file (nginx-black-conf))
+  (run-program "/bin/sh" `("-c" ,(nginx-reload)))
+  (propagate-realm))
 
 (defun realm/time/add/ ()
   (let ((realm-id (post-parameter "realm-id"))
@@ -66,12 +69,7 @@
 				([wday]     ,(if (equal wday "") nil wday))
 				([start]    ,start)
 				([stop]     ,stop)))
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (run-program "/bin/sh" `("-c" ,(nginx-reload)))
-		       (schedule-black-timer)))
-		 :name (format nil "generate ~a" (nginx-black-conf)))
+    (signal-semaphore *black-semaphore*)
     (redirect (format nil "/realm/?id=~a" realm-id))))
 
 (defun realm/time/del/ ()
@@ -79,12 +77,7 @@
 	(realm-id (get-parameter "realm-id")))
     (delete-records :from [black-time]
 		    :where [= [id] id])
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (run-program "/bin/sh" `("-c" ,(nginx-reload)))
-		       (schedule-black-timer)))
-		 :name (format nil "generate ~a" (nginx-black-conf)))
+    (signal-semaphore *black-semaphore*)
     (redirect (format nil "/realm/?id=~a" realm-id))))
 
 (defun realm-internal-plist (&key realm-id)
@@ -233,13 +226,7 @@
 					 ([block-url] ,block-url)
 					 ([active]    ,active)))
 	     (push '(:motd-realm-added t) (session-value :motd))))
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (run-program "/bin/sh" `("-c" ,(nginx-reload)))
-		       (schedule-black-timer)
-		       (propagate-realm)))
-		 :name (format nil "generate ~a" (nginx-black-conf)))
+    (signal-semaphore *black-semaphore*)
     (redirect (format nil "/realm/?id=~a" id))))
 
 ;;;;

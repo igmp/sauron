@@ -52,11 +52,7 @@
 	     (not (working-registry-id)))
     (setf (working-registry-id) (last-registry-id)))
   (send-message *execute-mailbox* (list :id (working-registry-id)))
-  (make-thread #'(lambda ()
-		   (with-sauron-db ()
-		     (generate-nginx-conf :black :file (nginx-black-conf))
-		     (propagate-realm)))
-	       :name (format nil "propagate black"))
+  (signal-semaphore *black-semaphore*)
   (push '(:motd-config-set t) (session-value :motd))
   (redirect "/config/"))
 

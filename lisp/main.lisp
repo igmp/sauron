@@ -124,13 +124,15 @@
     (terminate-thread *check-registry*))
 
   (:method ((action (eql :start)) (system (eql :black)))
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (execute-registry :id (working-registry-id))
-		       (schedule-black-timer)))
-		 :name (format nil "execute registry ~a" (working-registry-id))))
+    (setq *black-switch*
+	  (make-thread #'(lambda ()
+			   (with-sauron-db ()
+			     (loop (handler-case (black-switch)
+				     (t () nil))
+				(wait-on-semaphore *black-semaphore*
+						   :timeout (black-time-interval)))))
+		       :name (format nil "switch black lists"))))
   (:method ((action (eql :stop)) (system (eql :black)))
-    (schedule-black-timer nil)))
+    (terminate-thread *black-switch*)))
 
 ;;;;
