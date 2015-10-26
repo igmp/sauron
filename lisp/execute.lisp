@@ -15,29 +15,33 @@
 			     :where [= [-update-time] ,time])))))
 
 (defun generate-registry-csv (&key (id (working-registry-id)) (file (registry-csv)))
-  (with-open-file (stream file
-			  :direction :output
-			  :if-exists :supersede
-			  :if-does-not-exist :create)
-    (loop for (content-id content-id* domain location) in
-	 (select [content id] [-id] [-domain] [-location]
-		 :from '([content] [resource])
-		 :where [and [= [content id] [content-id]]
-			     [= [content registry-id] id]]
-		 :order-by '([-id] [-domain] [-location]))
-       do (format stream "~a; \"~a\"; \"~a\"; ~{~a~^, ~}~%"
-		  content-id* domain (or location "") (select [-address]
-							      :from [rkn-ip-address]
-							      :where [= [content-id] content-id]
-							      :flatp t)))))
+  (let ((tmp (uiop/stream::get-temporary-file :directory (tmp-directory))))
+    (with-open-file (stream tmp
+			    :direction :output
+			    :if-exists :supersede
+			    :if-does-not-exist :create)
+      (loop for (content-id content-id* domain location) in
+	   (select [content id] [-id] [-domain] [-location]
+		   :from '([content] [resource])
+		   :where [and [= [content id] [content-id]]
+			       [= [content registry-id] id]]
+		   :order-by '([-id] [-domain] [-location]))
+	 do (format stream "~a; \"~a\"; \"~a\"; ~{~a~^, ~}~%"
+		    content-id* domain (or location "") (select [-address]
+								:from [rkn-ip-address]
+								:where [= [content-id] content-id]
+								:flatp t))))
+    (rename-file tmp file)))
 
 (defgeneric generate-bird-conf (type &key id file)
   (:method :around (type &key (file (bird-conf)) &allow-other-keys)
-    (with-open-file (*default-template-output* file
-					       :direction :output
-					       :if-exists :supersede
-					       :if-does-not-exist :create)
-      (call-next-method)))
+    (let ((tmp (uiop/stream::get-temporary-file :directory (tmp-directory))))
+      (with-open-file (*default-template-output* tmp
+						 :direction :output
+						 :if-exists :supersede
+						 :if-does-not-exist :create)
+	(call-next-method))
+      (rename-file tmp file)))
   (:method ((type (eql :static)) &key (id (working-registry-id)) &allow-other-keys)
     (ftmpl #p"conf/bird-static.conf"
 	   (list :bird-protocol (bird-protocol)
@@ -50,11 +54,13 @@
 
 (defgeneric generate-nginx-conf (type &key id file)
   (:method :around (type &key file &allow-other-keys)
-    (with-open-file (*default-template-output* file
-					       :direction :output
-					       :if-exists :supersede
-					       :if-does-not-exist :create)
-      (call-next-method)))
+    (let ((tmp (uiop/stream::get-temporary-file :directory (tmp-directory))))
+      (with-open-file (*default-template-output* tmp
+						 :direction :output
+						 :if-exists :supersede
+						 :if-does-not-exist :create)
+	(call-next-method))
+      (rename-file tmp file)))
   (:method ((type (eql :black)) &key id file)
     (declare (ignore id file))
     (ftmpl #p"conf/nginx-black.conf"

@@ -138,7 +138,7 @@
 	    (cond ((= code* 0)
 		   (sleep 60)) ; wait 1 minute before next try
 		  ((= code* 1)
-		   (send-message *process-registry* (list :id id :exec t))
+		   (send-message *process-mailbox* (list :id id :exec t))
 		   (return id))
 		  ((< code* 0)
 		   (acceptor-log-message *http-server* :error "while getting result of ~a: ~a" code comment)
@@ -162,7 +162,7 @@
 	   (insert-records :into [registry]
 			   :av-pairs `(([id] ,id)))
 	   (rename-file (first file) zip)
-	   (send-message *process-registry* (list :id id :exec exec))
+	   (send-message *process-mailbox* (list :id id :exec exec))
 	   (push '(:motd-registry-loaded t) (session-value :motd))
 	   (when exec
 	     (push '(:motd-registry-executed t) (session-value :motd)))))

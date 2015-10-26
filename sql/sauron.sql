@@ -73,8 +73,9 @@ create table registry (
 	_time				timestamp with time zone not NULL
 					default now(),
 	_update_time			timestamp with time zone
-					default now(),
-	_update_time_urgently		timestamp with time zone,
+					default now() - interval '1 hour',
+	_update_time_urgently		timestamp with time zone
+					default now() - interval '1 hour',
 	_format_version			varchar(16),
 	completed			boolean,
 	resource_count			integer
