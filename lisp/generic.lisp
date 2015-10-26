@@ -100,6 +100,15 @@ list to #'process-registry.")
 (defvar *process-registry* nil
   "Process RKN's registries.")
 
+(defvar *execute-mailbox*
+  (sb-concurrency:make-mailbox :name "execute mailbox")
+  "Messages about registries to be executeed are sent here.  Each message
+is a property list with :id property.  It can serve as an argument list to
+#'execute-registry.")
+
+(defvar *execute-registry* nil
+  "Execute RKN's registries.")
+
 (defvar *black-time-switcher*
   (make-timer #'(lambda ()
 		  (with-sauron-db ()

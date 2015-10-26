@@ -9,6 +9,7 @@
 	   #:*db-port*
 	   #:*db-user*
 	   #:*download-semaphore*
+	   #:*execute-mailbox*
 	   #:*process-mailbox*
 	   #:*sauron-version*
 

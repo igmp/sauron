@@ -105,6 +105,7 @@
 										:root (root-means-domain)))))))))))
 
 (defun execute-registry (&key (id (working-registry-id)))
+  "Generate bird.conf and nginx-rkn.conf and then reload both daemons."
   (setf (working-registry-id) id)
   (generate-registry-csv :id (and (active-sauron) id))
   (generate-bird-conf :static :id (and (active-sauron) id))
@@ -151,10 +152,7 @@
 (defun registry/exec/ ()
   (setf (active-sauron) "exec")
   (let ((id (string-integer (get-parameter "id"))))
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (execute-registry :id id)))
-		 :name (format nil "exec-registry ~a" id))
+    (send-message *execute-mailbox* (list :id id))
     (push '(:motd-registry-executed t) (session-value :motd)))
   (redirect "/status/"))
 

@@ -114,13 +114,11 @@
     (sleep 1)))
 
 (defun process-registry (&key id exec)
-  (handler-case
-      (progn (extract-registry (format nil "~a~a" (zip-directory) id))
-	     (evaluate-registry :id id)
-	     (when exec
-	       (execute-registry :id id))
-	     (clear-outdated))
-    (file-error () (annihilate-registry :id id))))
+  (extract-registry (format nil "~a~a" (zip-directory) id))
+  (evaluate-registry :id id)
+  (when exec
+    (send-message *execute-mailbox* (list :id id)))
+  (clear-outdated))
 
 (defun check-registry ()
   (multiple-value-bind (urgently date) (get-last-dump-date-ex)
