@@ -1,5 +1,6 @@
 (defpackage :sauron
-  (:use :cl-base64 :cl-ppcre :clsql :common-lisp :html-template :hunchentoot :sb-ext :sb-thread)
+  (:use :cl-base64 :cl-ppcre :clsql :common-lisp :html-template :hunchentoot
+	:sb-concurrency :sb-ext :sb-thread)
   (:import-from :drakma
 		#:http-request)
   (:export #:*db-host*
@@ -8,6 +9,7 @@
 	   #:*db-port*
 	   #:*db-user*
 	   #:*download-semaphore*
+	   #:*process-mailbox*
 	   #:*sauron-version*
 
 	   #:annihilate-registry
@@ -23,11 +25,9 @@
 	   #:get-last-dump-date
 	   #:get-last-dump-date-ex
 	   #:get-result
+	   #:init-sauron
 	   #:process-registry
-	   #:restart-sauron
 	   #:schedule-black-timer
-	   #:send-request
-	   #:start-sauron
-	   #:stop-sauron))
+	   #:send-request))
 
 ;;;;

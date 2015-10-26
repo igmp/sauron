@@ -6,14 +6,15 @@
   :version "0.16"
 
   :depends-on (cl-base64 cl-ppcre clsql-postgresql-socket drakma html-template hunchentoot
-			uiop xmls)
+			 sb-concurrency uiop xmls)
   :serial t
   :components ((:file "package")
-	       (:file "server")
+	       (:file "generic")
 	       (:file "config")
 	       (:file "evaluate")
 	       (:file "execute")
 	       (:file "load")
-	       (:file "realm")))
+	       (:file "realm")
+	       (:file "main")))
 
 ;;;;

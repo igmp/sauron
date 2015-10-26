@@ -52,7 +52,7 @@ function do_start() {
 	--eval "(asdf:operate (quote asdf:load-op) :swank)" \
 	--eval "(swank:create-server :port ${SLIME_PORT:-4005} :dont-close t)" \
 	--eval "(ql:quickload \"sauron\")" \
-	--eval "(sauron:start-sauron)"
+	--eval "(sauron:init-sauron :start t)"
 }
 
 #

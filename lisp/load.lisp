@@ -113,7 +113,7 @@
 	      (return (values nil code* comment))))))
     (sleep 1)))
 
-(defun process-registry (&key id (exec t))
+(defun process-registry (&key id exec)
   (handler-case
       (progn (extract-registry (format nil "~a~a" (zip-directory) id))
 	     (evaluate-registry :id id)
@@ -121,10 +121,6 @@
 	       (execute-registry :id id))
 	     (clear-outdated))
     (file-error () (annihilate-registry :id id))))
-
-(defvar *download-semaphore*
-  (make-semaphore :name "download semaphore")
-  "If it went up then it's now time to download a new registry.")
 
 (defun check-registry ()
   (multiple-value-bind (urgently date) (get-last-dump-date-ex)
@@ -144,7 +140,7 @@
 	    (cond ((= code* 0)
 		   (sleep 60)) ; wait 1 minute before next try
 		  ((= code* 1)
-		   (process-registry :id id)
+		   (send-message *process-registry* (list :id id :exec t))
 		   (return id))
 		  ((< code* 0)
 		   (acceptor-log-message *http-server* :error "while getting result of ~a: ~a" code comment)
@@ -168,12 +164,7 @@
 	   (insert-records :into [registry]
 			   :av-pairs `(([id] ,id)))
 	   (rename-file (first file) zip)
-	   (make-thread #'(lambda ()
-			    (with-sauron-db ()
-			      (with-transaction ()
-				(process-registry :id   id
-						  :exec exec))))
-			:name (format nil "process registry ~a" id))
+	   (send-message *process-registry* (list :id id :exec exec))
 	   (push '(:motd-registry-loaded t) (session-value :motd))
 	   (when exec
 	     (push '(:motd-registry-executed t) (session-value :motd)))))

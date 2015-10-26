@@ -78,54 +78,29 @@
 (define-home-variable tmpl-directory   "tmpl/")
 (define-home-variable zip-directory    "data/zip/")
 
-(defparameter *sauron-dispatch-table*
-  (list (create-regex-dispatcher "^/$" 'root-redirect)
-	(create-regex-dispatcher "^/config/$"         'config/)
-	(create-regex-dispatcher "^/config/set/$"     'config/set/)
-	(create-regex-dispatcher "^/realm/$"          'realm/)
-	(create-regex-dispatcher "^/realm/new/$"      'realm/new/)
-	(create-regex-dispatcher "^/realm/set/$"      'realm/set/)
-	(create-regex-dispatcher "^/realm/time/add/$" 'realm/time/add/)
-	(create-regex-dispatcher "^/realm/time/del/$" 'realm/time/del/)
-	(create-regex-dispatcher "^/registry/$"       'registry/)
-	(create-regex-dispatcher "^/registry/come/$"  'registry/come/)
-	(create-regex-dispatcher "^/registry/del/$"   'registry/del/)
-	(create-regex-dispatcher "^/registry/exec/$"  'registry/exec/)
-	(create-regex-dispatcher "^/registry/load/$"  'registry/load/)
-	(create-regex-dispatcher "^/status/$"         'status/)
-        (create-regex-dispatcher "\\.(css)$" 'static-file)))
-
-(defclass sauron-acceptor (acceptor)
-  ()
-  (:default-initargs
-   :address "127.0.0.1"
-   :port 8004
-   :access-log-destination (concatenate 'string (home-directory) "log/access.log")
-   :message-log-destination (concatenate 'string (home-directory) "log/error.log")))
-
-(defmethod acceptor-dispatch-request ((acceptor sauron-acceptor) request)
-  (in-package :sauron)
-  (mapc #'(lambda (dispatcher)
-	    (let ((handler (funcall dispatcher request)))
-	      (when handler
-		(return-from acceptor-dispatch-request
-		  (with-sauron-db ()
-		    (let ((*session-max-time* 7200)
-			  (*tmp-directory* (tmp-directory)))
-		      (funcall handler)))))))
-	*sauron-dispatch-table*)
-  (call-next-method))
-
 (defvar *http-server* nil
   "Sauron's HTTP server.")
 
 (defvar *check-registry* nil
   "Check for RKN's registry freshness.")
 
+(defvar *download-semaphore*
+  (make-semaphore :name "download semaphore")
+  "If it went up then it's now time to download a new registry.")
+
 (defvar *download-registry* nil
   "Download RKN's registries.")
 
-(defparameter *black-time-switcher*
+(defvar *process-mailbox*
+  (sb-concurrency:make-mailbox :name "process mailbox")
+  "Messages about registries to be processed are sent here.  Each message is
+a property list with :id and :exec properties.  It can serve as an argument
+list to #'process-registry.")
+
+(defvar *process-registry* nil
+  "Process RKN's registries.")
+
+(defvar *black-time-switcher*
   (make-timer #'(lambda ()
 		  (with-sauron-db ()
 		    (generate-nginx-conf :black :file (nginx-black-conf))
@@ -133,47 +108,6 @@
 	      :name "black time switcher"
 	      :thread t)
   "Next time nginx-black.conf should be regenerated.")
-
-(defun start-sauron ()
-  (with-sauron-db ()
-    (start (setf *http-server* (make-instance 'sauron-acceptor)))
-    (make-thread #'(lambda ()
-		     (with-sauron-db ()
-		       (generate-nginx-conf :black :file (nginx-black-conf))
-		       (execute-registry :id (working-registry-id))
-		       (schedule-black-timer)))
-		 :name (format nil "execute registry ~a" (working-registry-id)))
-    (setq *download-registry*
-	  (make-thread #'(lambda ()
-			   (with-sauron-db ()
-			     (loop (download-registry)
-				(wait-on-semaphore *download-semaphore*
-						   :timeout (* 60 60 (parse-integer (download-period)))))))
-		       :name "download registry"))
-    (setq *check-registry*
-	  (make-thread #'(lambda ()
-			   (sleep 300) ; wait 5 minutes for initial download to complete
-			   (with-sauron-db ()
-			     (loop (check-registry)
-				(sleep (* 60 (parse-integer (check-period)))))))
-		       :name "check registry"))))
-
-(defun stop-sauron ()
-  (schedule-black-timer nil)
-  (terminate-thread *check-registry*)
-  (terminate-thread *download-registry*)
-  (stop *http-server*))
-
-(defun restart-sauron ()
-  (stop-sauron)
-  (sleep 1)
-  (start-sauron))
-
-(defun static-file ()
-  (handle-static-file (concatenate 'string (home-directory) (script-name*))))
-
-(defun root-redirect ()
-  (redirect "/status/"))
 
 (defun sauron-plist ()
   (append (list :sauron-version *sauron-version*)
