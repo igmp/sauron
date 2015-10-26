@@ -3,7 +3,8 @@
 	:sb-concurrency :sb-ext :sb-thread)
   (:import-from :drakma
 		#:http-request)
-  (:export #:*db-host*
+  (:export #:*check-semaphore*
+	   #:*db-host*
 	   #:*db-name*
 	   #:*db-password*
 	   #:*db-port*

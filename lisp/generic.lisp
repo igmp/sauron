@@ -81,9 +81,6 @@
 (defvar *http-server* nil
   "Sauron's HTTP server.")
 
-(defvar *check-registry* nil
-  "Check for RKN's registry freshness.")
-
 (defvar *download-semaphore*
   (make-semaphore :name "download semaphore")
   "If it went up then it's now time to download a new registry.")
@@ -108,6 +105,13 @@ is a property list with :id property.  It can serve as an argument list to
 
 (defvar *execute-registry* nil
   "Execute RKN's registries.")
+
+(defvar *check-semaphore*
+  (make-semaphore :name "check semaphore")
+  "If it went up then it's now time to check for a registry renewal.")
+
+(defvar *check-registry* nil
+  "Check for RKN's registry renewal.")
 
 (defvar *black-time-switcher*
   (make-timer #'(lambda ()

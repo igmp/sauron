@@ -144,10 +144,10 @@
 		   (acceptor-log-message *http-server* :error "while getting result of ~a: ~a" code comment)
 		   (return)))))))
 
-(defun registry/load/ ()
-  (with-output-to-string (*default-template-output*)
-    (ftmpl #p"registry/load.html" (append (list :load-tab t)
-					  (sauron-plist)))))
+(defun registry/check/ ()
+  (signal-semaphore *check-semaphore*)
+  (push '(:motd-registry-checked t) (session-value :motd))
+  (redirect (format nil "/status/")))
 
 (defun registry/come/ ()
   (let* ((from (post-parameter "from"))

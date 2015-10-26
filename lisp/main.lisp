@@ -11,10 +11,10 @@
 	(create-regex-dispatcher "^/realm/time/add/$" 'realm/time/add/)
 	(create-regex-dispatcher "^/realm/time/del/$" 'realm/time/del/)
 	(create-regex-dispatcher "^/registry/$"       'registry/)
+	(create-regex-dispatcher "^/registry/check/$" 'registry/check/)
 	(create-regex-dispatcher "^/registry/come/$"  'registry/come/)
 	(create-regex-dispatcher "^/registry/del/$"   'registry/del/)
 	(create-regex-dispatcher "^/registry/exec/$"  'registry/exec/)
-	(create-regex-dispatcher "^/registry/load/$"  'registry/load/)
 	(create-regex-dispatcher "^/status/$"         'status/)
         (create-regex-dispatcher "\\.(css)$" 'static-file)))
 
@@ -115,8 +115,10 @@
 	  (make-thread #'(lambda ()
 			   (sleep 300) ; wait 5 minutes for initial download to complete
 			   (with-sauron-db ()
-			     (loop (check-registry)
-				(sleep (* 60 (parse-integer (check-period)))))))
+			     (loop (handler-case (check-registry)
+				     (t () nil))
+				(wait-on-semaphore *check-semaphore*
+						   :timeout (* 60 (parse-integer (check-period)))))))
 		       :name "check registry")))
   (:method ((action (eql :stop)) (system (eql :check)))
     (terminate-thread *check-registry*))
