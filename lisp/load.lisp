@@ -6,11 +6,12 @@
 (defparameter *max-request-number* 3
   "Maximum number of request before giving up.")
 
-(defun last-seen-dump-date ()
-  (apply #'values (or (first (append (select [-urgently] [-date]
-					 :from [last-info]
-					 :order-by '(([time] :desc))
-					 :limit 1)))
+(defun last-registry-date ()
+  (apply #'values (or (first (query "select extract(epoch from _update_time_urgently)::integer,
+				       extract(epoch from _update_time)::integer
+				     from registry
+				     order by _update_time_urgently desc
+				     limit 1"))
 		      '(0 0))))
 
 (defun get-last-dump-date ()
@@ -35,8 +36,8 @@
 				 (ftmpl #p"xml/getLastDumpDateEx.xml" nil)))
       (when (eq status 200) ;; got OK
 	(let* ((reply (cddr (third (third (xmls:parse body)))))
-	       (timestamp   (parse-integer (third (find "lastDumpDate"         reply :key #'first :test #'equal))))
-	       (urgently    (parse-integer (third (find "lastDumpDateUrgently" reply :key #'first :test #'equal))))
+	       (timestamp   (/ (parse-integer (third (find "lastDumpDate"         reply :key #'first :test #'equal))) 1000))
+	       (urgently    (/ (parse-integer (third (find "lastDumpDateUrgently" reply :key #'first :test #'equal))) 1000))
 	       (web-service (third (find "webServiceVersion"    reply :key #'first :test #'equal)))
 	       (dump-format (third (find "dumpFormatVersion"    reply :key #'first :test #'equal)))
 	       (doc         (third (find "docVersion"           reply :key #'first :test #'equal)))
@@ -123,9 +124,9 @@
 (defun check-registry ()
   (multiple-value-bind (urgently date) (get-last-dump-date-ex)
     (acceptor-log-message *http-server* :info "last dump: date ~a, urgently ~a"
-			  (unix-time-string (/ date 1000))
-			  (unix-time-string (/ urgently 1000)))
-    (when (> urgently (last-seen-dump-date))
+			  (unix-time-string date)
+			  (unix-time-string urgently))
+    (when (> urgently (last-registry-date))
       (signal-semaphore *download-semaphore*))))
 
 (defun download-registry ()
