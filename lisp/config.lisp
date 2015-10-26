@@ -57,11 +57,11 @@
   (redirect "/config/"))
 
 (defun status-plist ()
-  (append (list :last-info-date (caar (select (sql-operation 'function "to_timestamp" [/ [-date] 1000])
+  (append (list :last-info-date (caar (select (sql-operation 'function "to_timestamp" [-date])
 					      :from [last-info]
 					      :order-by '(([time] :desc))
 					      :limit 1))
-		:last-info-urgently (caar (select (sql-operation 'function "to_timestamp" [/ [-urgently] 1000])
+		:last-info-urgently (caar (select (sql-operation 'function "to_timestamp" [-urgently])
 						  :from [last-info]
 						  :order-by '(([time] :desc))
 						  :limit 1))

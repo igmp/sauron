@@ -10,7 +10,7 @@
   (apply #'values (or (first (query "select extract(epoch from _update_time_urgently)::integer,
 				       extract(epoch from _update_time)::integer
 				     from registry
-				     order by _update_time_urgently desc
+				     order by _update_time_urgently desc, _update_time desc
 				     limit 1"))
 		      '(0 0))))
 
@@ -126,8 +126,10 @@
     (acceptor-log-message *http-server* :info "last dump: date ~a, urgently ~a"
 			  (unix-time-string date)
 			  (unix-time-string urgently))
-    (when (> urgently (last-registry-date))
-      (signal-semaphore *download-semaphore*))))
+    (multiple-value-bind (last-urg last-date) (last-registry-date)
+      (when (or (> urgently last-urg)
+		(> (- date last-date) (* 60 60 (parse-integer (download-period)))))
+	(signal-semaphore *download-semaphore*)))))
 
 (defun download-registry ()
   (multiple-value-bind (code comment) (send-request)

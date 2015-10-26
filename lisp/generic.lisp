@@ -12,7 +12,7 @@
 
 (defparameter *wday-arr* #("пн" "вт" "ср" "чт" "пт" "сб" "вс"))
 
-(defparameter clsql-sys::*retry-on-socket-error* nil
+(defvar clsql-sys::*retry-on-socket-error* nil
   "Whether retry to connect in case of some network failure.")
 
 (defmethod clsql-sys:database-connect :around (connection-spec database-type)

@@ -147,7 +147,10 @@
     (let* ((delete (select [id]
 			   :from [delete-registry]
 			   :flatp t))
-	   (delete* (or delete (sql-expression :string "(0)"))))
+	   (delete* (or delete (sql-expression :string "(0)")))
+	   (request-id (caar (select [request-id]
+				     :from [registry]
+				     :where [= [id] id]))))
       (delete-records :from [rkn-ip-address]
 		      :where [in [registry-id] delete*])
       (delete-records :from [resource]
@@ -156,6 +159,8 @@
 		      :where [in [registry-id] delete*])
       (delete-records :from [registry]
 		      :where [in [id] delete*])
+      (delete-records :from [request]
+		      :where [= [id] request-id])
       (dolist (id delete)
 	(ignore-errors (delete-file (format nil "~a~a" (zip-directory) id)))))))
 
