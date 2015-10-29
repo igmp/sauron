@@ -22,29 +22,33 @@
 	<td id="main">
 	  <table width="80%">
 	    <tr>
-	      <th width="90%">
+	      <th width="85%">
 		Название / имя
 	      </th>
 	      <th width="10%">
 		Статус
 	      </th>
+	      <th width="5%"></th>
 	    </tr>
 	    <tmpl_loop 'realm-list'>
 	      <tr>
 		<td>
 		  <a href="/realm/?id=<tmpl_var 'id'>"><tmpl_var 'name'></a>
 		</td>
-		<td>
+		<td align="right">
 		  <tmpl_if 'active'>
 		    включен
 		  <tmpl_else>
 		    выключен
 		  </tmpl_if>
 		</td>
+		<td align="right">
+		  <a href="/realm/del/?id=<tmpl_var 'id'>">X</a>
+		</td>
 	      </tr>
 	    </tmpl_loop>
 	    <tr>
-	      <td colspan="2" align="right">
+	      <td colspan="3" align="right">
 		<form action="/realm/new/" method="get">
 		  <input type="submit" value=" Добавить ">
 		</form>

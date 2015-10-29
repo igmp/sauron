@@ -6,6 +6,7 @@
 	(create-regex-dispatcher "^/config/$"         'config/)
 	(create-regex-dispatcher "^/config/set/$"     'config/set/)
 	(create-regex-dispatcher "^/realm/$"          'realm/)
+	(create-regex-dispatcher "^/realm/del/$"      'realm/del/)
 	(create-regex-dispatcher "^/realm/new/$"      'realm/new/)
 	(create-regex-dispatcher "^/realm/set/$"      'realm/set/)
 	(create-regex-dispatcher "^/realm/time/add/$" 'realm/time/add/)

@@ -229,4 +229,19 @@
     (signal-semaphore *black-semaphore*)
     (redirect (format nil "/realm/?id=~a" id))))
 
+(defun realm/del/ ()
+  (let ((id (get-parameter "id")))
+    (delete-records :from [black-time]
+		    :where [= [realm-id] id])
+    (delete-records :from [realm-internal-address]
+		    :where [= [realm-id] id])
+    (delete-records :from [realm-external-address]
+		    :where [= [realm-id] id])
+    (delete-records :from [black-list]
+		    :where [= [realm-id] id])
+    (delete-records :from [realm]
+		    :where [= [id] id])
+    (signal-semaphore *black-semaphore*)
+    (redirect "/realm/")))
+
 ;;;;
