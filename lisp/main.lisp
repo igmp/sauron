@@ -39,8 +39,9 @@
 	    (let ((handler (funcall dispatcher request)))
 	      (when handler
 		(return-from acceptor-dispatch-request
-		  (with-sauron-db ()
+		  (with-sauron-db (:retry nil)
 		    (let ((*session-max-time* 7200)
+			  (*show-lisp-errors-p* t)
 			  (*tmp-directory* (tmp-directory)))
 		      (funcall handler)))))))
 	*sauron-dispatch-table*)
