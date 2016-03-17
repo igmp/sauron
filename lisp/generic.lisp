@@ -160,7 +160,7 @@ for EXTERNAL-FORMAT is the value of *HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
 	 do (cond ((or (char<= #\0 c #\9)
 		       (char<= #\a c #\z)
 		       (char<= #\A c #\Z)
-		       (find c "/?:@&-_.+!*'()," :test #'char=))
+		       (find c "/?:@&-_.+!*'(),=" :test #'char=))
 		   (write-char c s))
 		  (t (loop for octet across
 			  (flexi-streams:string-to-octets string
