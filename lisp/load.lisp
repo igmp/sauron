@@ -136,6 +136,7 @@
     (unless code
       (acceptor-log-message *http-server* :error "while sending request: ~a" comment)
       (return-from download-registry))
+    (acceptor-log-message *http-server* :info "waiting for an answer from RKN")
     (sleep 120) ; wait 2 minutes while RKN is preparing an answer
     (loop (multiple-value-bind (id code* comment) (get-result code)
 	    (cond ((= code* 0)

@@ -20,17 +20,23 @@
 			    :direction :output
 			    :if-exists :supersede
 			    :if-does-not-exist :create)
-      (loop for (content-id content-id* domain location) in
-	   (select [content id] [-id] [-domain] [-location]
+      (loop for (content-id content-id* domain location query anchor) in
+	   (select [content id] [-id] [-domain] [-location] [-query] [-anchor]
 		   :from '([content] [resource])
 		   :where [and [= [content id] [content-id]]
 			       [= [content registry-id] id]]
-		   :order-by '([-id] [-domain] [-location]))
+		   :order-by '([-id] [-domain] [-location] [-query] [-anchor]))
 	 do (format stream "~a; \"~a\"; \"~a\"; ~{~a~^, ~}~%"
-		    content-id* domain (or location "") (select [-address]
-								:from [rkn-ip-address]
-								:where [= [content-id] content-id]
-								:flatp t))))
+		    content-id*
+		    domain
+		    (if location
+			(format nil "~a~@[?~a~]~@[#~a~]"
+				location query anchor)
+			"")
+		    (select [-address]
+			    :from [rkn-ip-address]
+			    :where [= [content-id] content-id]
+			    :flatp t))))
     (rename-file tmp file)))
 
 (defgeneric generate-bird-conf (type &key id file)
@@ -75,19 +81,21 @@
     (let ((dmnhash (make-hash-table :test 'equal)) ; all known domains
 	  (lcthash nil) ; all known locations for a current domain
 	  (dmn0 ""))    ; previous domain
-      (loop for (content-id domain location) in
-	   (select [-id] [-domain] [-location]
+      (loop for (content-id domain location query anchor) in
+	   (select [-id] [-domain] [-location] [-query] [-anchor]
 		   :from '([content] [resource])
 		   :where [and [= [content id] [content-id]]
 			       [is [ssl] nil]
 			       [is [-url] nil]
 			       [= [content registry-id] id]]
-		   :order-by '([-domain] [-location]))
-	 do (let ((location* (url-encode* location)))
+		   :order-by '([-domain] [-location] [-query] [-anchor]))
+	 do (let ((location* (url-encode* (format nil "~@[~a~@[?~a~]~]" location query))))
 	      (unless (string-equal domain dmn0)
 		(setq lcthash (make-hash-table :test 'equal)))
 	      (setf (gethash location* lcthash)
-		    (append (list :content-id content-id)
+		    (append (list :content-id content-id
+				  :query      query
+				  :anchor     anchor)
 			    (let ((root (or (not location*)
 					    (and (eql location* "/")
 						 (root-means-domain)))))

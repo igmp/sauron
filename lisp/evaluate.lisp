@@ -112,8 +112,30 @@
 	    (cond (url-list
 		   (dolist (url url-list)
 		     (incf resource-count)
-		     (register-groups-bind ((#'string-downcase proto domain) location entire)
-			 ("(?:(http|https)://([^/]+)(/.*)?)|^(.*)$" url)
+		     (register-groups-bind ((#'string-downcase proto domain) location query anchor entire)
+			 ('(:alternation
+			    (:sequence (:group :case-insensitive-p (:register (:alternation "http" ; proto
+											    "https")))
+				       "://"
+				       (:register (:greedy-repetition 1 nil ; domain
+						   (:inverted-char-class #\/)))
+				       (:greedy-repetition 0 1
+					(:sequence (:register (:sequence #\/ ; location
+									 (:greedy-repetition 0 nil
+									  (:inverted-char-class #\? #\#))))
+						   (:greedy-repetition 0 1
+						    (:sequence #\?
+							       (:register (:greedy-repetition 0 nil ; query
+									   (:inverted-char-class #\#)))))
+						   (:greedy-repetition 0 1
+						    (:sequence #\#
+							       (:register (:greedy-repetition 0 nil ; anchor
+									   :everything)))))))
+			    (:sequence :start-anchor
+				       (:register (:greedy-repetition 0 nil ; entire
+						   :everything))
+				       :end-anchor))
+			   url)
 		       (if entire
 			   (insert-records :into [resource]
 					   :av-pairs `(([registry-id] ,id)
@@ -124,7 +146,9 @@
 						       ([content-id]  ,content-id)
 						       ([ssl]         ,(not (equal proto "http")))
 						       ([-domain]     ,domain)
-						       ([-location]   ,location)))))))
+						       ([-location]   ,location)
+						       ([-query]      ,query)
+						       ([-anchor]     ,anchor)))))))
 		  (t (incf resource-count)
 		     (insert-records :into [resource]
 				     :av-pairs `(([registry-id] ,id)
@@ -170,11 +194,11 @@
 				  "from registry "
 				  "where _update_time + interval '" days " days' < now() ")
 		     :flatp t))
-    (annihilate-registry :id id)
-    (delete-records :from [request]
-		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))])
-    (delete-records :from [last-info]
-		    :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))])))
+    (annihilate-registry :id id))
+  (delete-records :from [request]
+		  :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))])
+  (delete-records :from [last-info]
+		  :where [< [time] (sql-expression :string (format nil "now() - interval '~a days'" (store-interval)))]))
 
 (defun registry/del/ ()
   (let ((id (string-integer (get-parameter "id"))))

@@ -136,6 +136,8 @@ create table resource (
 	ssl				boolean,
 	_domain				varchar(1024),
 	_location			varchar(4096),
+	_query				varchar(4096),
+	_anchor				varchar(4096),
 	_url				varchar(4096)
 );
 
