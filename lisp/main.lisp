@@ -82,7 +82,8 @@
 	  (make-thread #'(lambda ()
 			   (with-sauron-db ()
 			     (loop (handler-case (download-registry)
-				     (t () nil))
+				     (t (condition)
+				       (acceptor-log-message *http-server* :error "an error has occured: ~a" condition)))
 				(wait-on-semaphore *download-semaphore*
 						   :timeout (* 60 60 (parse-integer (download-period)))))))
 		       :name "download registry")))
@@ -96,7 +97,8 @@
 			     (loop (let ((to-process (receive-message *process-mailbox*)))
 				     (handler-case (apply #'process-registry to-process)
 				       (file-error () (apply #'annihilate-registry to-process))
-				       (t () nil))))))
+				       (t (condition)
+					 (acceptor-log-message *http-server* :error "an error has occured: ~a" condition)))))))
 		       :name "process registry")))
   (:method ((action (eql :stop)) (system (eql :process)))
     (terminate-thread *process-registry*))
@@ -107,7 +109,8 @@
 			   (with-sauron-db ()
 			     (loop (let ((to-execute (receive-message *execute-mailbox*)))
 				     (handler-case (apply #'execute-registry to-execute)
-				       (t () nil))))))
+				       (t (condition)
+					 (acceptor-log-message *http-server* :error "an error has occured: ~a" condition)))))))
 		       :name "execute registry")))
   (:method ((action (eql :stop)) (system (eql :execute)))
     (terminate-thread *execute-registry*))
@@ -118,7 +121,8 @@
 			   (sleep 300) ; wait 5 minutes for initial download to complete
 			   (with-sauron-db ()
 			     (loop (handler-case (check-registry)
-				     (t () nil))
+				     (t (condition)
+				       (acceptor-log-message *http-server* :error "an error has occured: ~a" condition)))
 				(wait-on-semaphore *check-semaphore*
 						   :timeout (* 60 (parse-integer (check-period)))))))
 		       :name "check registry")))
@@ -130,10 +134,11 @@
 	  (make-thread #'(lambda ()
 			   (with-sauron-db ()
 			     (loop (handler-case (black-switch)
-				     (t () nil))
+				     (t (condition)
+				       (acceptor-log-message *http-server* :error "an error has occured: ~a" condition)))
 				(wait-on-semaphore *black-semaphore*
 						   :timeout (black-time-interval)))))
-		       :name (format nil "switch black lists"))))
+		       :name "switch black lists")))
   (:method ((action (eql :stop)) (system (eql :black)))
     (terminate-thread *black-switch*)))
 

@@ -141,7 +141,7 @@ create table resource (
 	_url				varchar(4096)
 );
 
-create index resource_registry_idx on resource(registry_id);
+create index resource_registry_domain_location_idx on resource(registry_id, _domain, _location);
 create index resource_content_idx on resource(content_id);
 
 

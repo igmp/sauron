@@ -56,6 +56,7 @@
 		       (signature-file (format nil "~adata/xml/request.xml.sig" (home-directory)))
 		       (dump-format (dump-format)))
   (dotimes (i *max-request-number*)
+    (acceptor-log-message *http-server* :info "sending a request")
     (multiple-value-bind (body status)
 	(http-request *rkn-web-service*
 		      :method :post
@@ -64,6 +65,7 @@
 					(list :request-file (file-base64 request-file)
 					      :signature-file (file-base64 signature-file)
 					      :dump-format dump-format))))
+      (acceptor-log-message *http-server* :info "got an answer: ~a" status)
       (when (eq status 200) ;; got OK
 	(let* ((reply (cddr (third (third (xmls:parse body)))))
 	       (result  (third (find "result"        reply :key #'first :test #'equal)))
@@ -79,6 +81,7 @@
     (sleep 1)))
 
 (defun get-result (code)
+  (acceptor-log-message *http-server* :info "getting from RKN result of our request ~a" code)
   (dotimes (i *max-request-number*)
     (multiple-value-bind (body status)
 	(http-request *rkn-web-service*
@@ -86,6 +89,10 @@
 		      :content (with-output-to-string (*default-template-output*)
 				 (ftmpl #p"xml/getResult.xml"
 					(list :code code))))
+      (with-open-file (stream (format nil "~a/log/rkn.response" (home-directory))
+			      :direction :output
+			      :if-exists :supersede)
+	(format stream "~a" body))
       (when (eq status 200) ;; got OK
 	(let* ((reply (cddr (third (third (xmls:parse body)))))
 	       (code* (parse-integer (third (find "resultCode" reply :key #'first :test #'equal))))
@@ -132,14 +139,16 @@
 	(signal-semaphore *download-semaphore*)))))
 
 (defun download-registry ()
+  (acceptor-log-message *http-server* :info "downloading a registry")
   (multiple-value-bind (code comment) (send-request)
     (unless code
       (acceptor-log-message *http-server* :error "while sending request: ~a" comment)
       (return-from download-registry))
-    (acceptor-log-message *http-server* :info "waiting for an answer from RKN")
-    (sleep 120) ; wait 2 minutes while RKN is preparing an answer
+    (acceptor-log-message *http-server* :info "wait 2 minutes while RKN is preparing an answer for ~a" code)
+    (sleep 120)
     (loop (multiple-value-bind (id code* comment) (get-result code)
 	    (cond ((= code* 0)
+		   (acceptor-log-message *http-server* :info "wait 1 minute more for ~a" code)
 		   (sleep 60)) ; wait 1 minute before next try
 		  ((= code* 1)
 		   (send-message *process-mailbox* (list :id id :exec t))

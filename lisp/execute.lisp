@@ -75,48 +75,45 @@
 		   (black-sheet))))
   (:method ((type (eql :rkn)) &key (id (working-registry-id)) file)
     (declare (ignore file))
-    ;; Nginx doesn't allow duplicate locations within one domain.
-    ;; So we collect all locations into a hash tables (one hash table per domain).
-    ;; Then we write a config file from that unique hashes.
-    (let ((dmnhash (make-hash-table :test 'equal)) ; all known domains
-	  (lcthash nil) ; all known locations for a current domain
-	  (dmn0 ""))    ; previous domain
-      (loop for (content-id domain location query anchor) in
-	   (select [-id] [-domain] [-location] [-query] [-anchor]
-		   :from '([content] [resource])
-		   :where [and [= [content id] [content-id]]
-			       [is [ssl] nil]
-			       [is [-url] nil]
-			       [= [content registry-id] id]]
-		   :order-by '([-domain] [-location] [-query] [-anchor]))
-	 do (let ((location* (url-encode* (format nil "~@[~a~@[?~a~]~]" location query))))
-	      (unless (string-equal domain dmn0)
-		(setq lcthash (make-hash-table :test 'equal)))
-	      (setf (gethash location* lcthash)
-		    (append (list :content-id content-id
-				  :query      query
-				  :anchor     anchor)
-			    (let ((root (or (not location*)
-					    (and (eql location* "/")
-						 (root-means-domain)))))
-			      (when root
-				(list :root root)))))
-	      (unless (string-equal domain dmn0)
-		(setf (gethash domain dmnhash) lcthash))
-	      (setq dmn0 domain))
-	 finally (setf (gethash domain dmnhash) lcthash)) ; last domain's locations
+    ;; Get a list of all domains.
+    ;; For each domain get a list of different locations.
+    ;; For each location get a list of different query strings.
+    (labels ((location-query-list (domain location)
+	       (loop for (query) in
+		    (select [distinct [-query]]
+			    :from [resource]
+			    :where [and [= [-location] location]
+					[= [-domain] domain]
+					[= [registry-id] id]]
+			    :order-by [-query])
+		  collect (list :query (escape-nginx-parameter query))))
+	     (domain-location-list (domain)
+	       (loop for (location) in
+		    (select [distinct [-location]]
+			    :from [resource]
+			    :where [and [= [-domain] domain]
+					[= [registry-id] id]]
+			    :order-by [-location])
+		  collect (list :location (escape-nginx-parameter location)
+				:root (or (not location)
+					  (and (eql location "/")
+					       (root-means-domain)))
+				:query-list (location-query-list domain location))))
+	     (registry-domain-list ()
+	       (loop for (domain) in
+		    (select [distinct [-domain]]
+			    :from [resource]
+			    :where [and [is [ssl] nil]
+					[is [-url] nil]
+					[= [registry-id] id]]
+			    :order-by [-domain])
+		  collect (list :domain domain
+				:location-list (domain-location-list domain)))))
       (ftmpl #p"conf/nginx-rkn.conf"
 	     (list :nginx-port     (nginx-port)
 		   :nginx-resolver (nginx-resolver)
 		   :block-url      (block-url)
-		   :domain-list (loop for domain being each hash-key in dmnhash using (hash-value lcthash)
-				   collect (list :domain domain
-						 :resource-list (if (> (hash-table-count lcthash) 0)
-								    (loop for location being each hash-key in lcthash using (hash-value lctadd)
-								       collect (append (list :location (or location "/"))
-										       lctadd))
-								    (list (list :location "/"
-										:root (root-means-domain)))))))))))
+		   :domain-list    (registry-domain-list))))))
 
 (defun execute-registry (&key (id (working-registry-id)))
   "Generate bird.conf and nginx-rkn.conf and then reload both daemons."

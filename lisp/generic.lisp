@@ -149,6 +149,10 @@ is a property list with :id property.  It can serve as an argument list to
       (concatenate 'string "'" (regex-replace "'" string "''") "'")
       "''"))
 
+(defun escape-nginx-parameter (string)
+  (when string
+    (regex-replace-all "\\$" string "%24")))
+
 ;; modified Hunchentoot's version
 (defun url-encode* (string &optional (external-format *hunchentoot-default-external-format*))
   "URL-encodes a string using the external format EXTERNAL-FORMAT. The default
@@ -193,5 +197,14 @@ for EXTERNAL-FORMAT is the value of *HUNCHENTOOT-DEFAULT-EXTERNAL-FORMAT*."
     (declare (ignore wday daylight-p))
     (format nil "~d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~@d"
 	    year month mday hour minute second (- zone))))
+
+(defun read-file (filename)
+  (with-open-file (stream filename
+			  :element-type 'character)
+    (let ((seq (make-array (file-length stream)
+			   :element-type 'character
+			   :fill-pointer t)))
+      (setf (fill-pointer seq) (read-sequence seq stream))
+      seq)))
 
 ;;;;
